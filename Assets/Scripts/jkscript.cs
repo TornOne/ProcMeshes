@@ -7,10 +7,7 @@ public class jkscript : MonoBehaviour {
 	}
 
 	void Update() {
-		RaiseTerrain(new Vector3(0, 0, 0), Random.Range(1.0f, 50.0f), Random.Range(0.0f, 15.0f));
-		mesh.vertices = vertices;
-		mesh.RecalculateNormals();
-		
+		RaiseTerrain(new Vector3(0, 0, 0), Random.Range(1.0f, 30.0f), Random.Range(0.0f, 0.3f));
 	}
 
 	Mesh mesh;
@@ -148,7 +145,7 @@ public class jkscript : MonoBehaviour {
 	/** Recalculates the normal of one vertice
      */
 	public void RecalculateNormals(int i) {
-		// Should possibly change these to be inputs or calculated somehow?
+		// Should possibly change these to be inputs or calculated somehow
 		int xStep = 1;
 		int yStep = 1;
 
@@ -174,7 +171,8 @@ public class jkscript : MonoBehaviour {
 
 			// Inner vertice calculations can be simplified with algebra.
 			// Idea for simplification: https://stackoverflow.com/questions/6656358/calculating-normals-in-a-triangle-mesh/21660173#21660173
-			normals[i] = Vector3.Normalize(new Vector3(
+			// Temporary minus sign. Double-check equation!
+			normals[i] = -Vector3.Normalize(new Vector3(
 											 yStep * (2 * zLeft + zTop - zTopRight - 2 * zRight - zBot + zBotLeft),
 											 xStep * (2 * zTop + zTopRight - zRight - 2 * zBot - zBotLeft + zLeft),
 											 xStep * yStep * 6)
@@ -239,7 +237,7 @@ public class jkscript : MonoBehaviour {
 			float distVertSquared = Mathf.Pow(vertice.x - location.x, 2)
 									+ Mathf.Pow(vertice.z - location.z, 2);
 			if (distVertSquared < Mathf.Pow(radius, 2)) { // Vertice is close enough to the center for it to be moved
-				vertices[i] = vertice + new Vector3(0, 0, speed);
+				vertices[i] = vertice + new Vector3(0, speed, 0);
 			}
 		}
 
@@ -252,6 +250,8 @@ public class jkscript : MonoBehaviour {
 				RecalculateNormals(i);
 			}
 		}
+		mesh.normals = normals;
+		mesh.vertices = vertices;
 	}
 }
 
