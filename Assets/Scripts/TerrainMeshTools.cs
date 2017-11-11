@@ -146,7 +146,6 @@ public class TerrainMeshTools : MonoBehaviour {
      */
     public void RecalculateNormals(int i) {
         // Should possibly change these to be inputs or calculated somehow?
-        // The important thing, though, is not the step size but the ratio of xStep/yStep
         int xStep = 1; 
         int yStep = 1;
 
@@ -161,14 +160,14 @@ public class TerrainMeshTools : MonoBehaviour {
         Vector3 tempVec = new Vector3(0, 0, 0);
 
         if (row < gridSize - 1 && row > 0
-            && column > 0 && column < gridSize - 1)
-        {
-            float zTop = vertices[i - gridSize].z;
-            float zTopRight = vertices[i - (gridSize - 1)].z;
-            float zRight = vertices[i + 1].z;
-            float zBot = vertices[i + gridSize].z;
-            float zBotLeft = vertices[i + (gridSize - 1)].z;
-            float zLeft = vertices[i - 1].z;
+            && column > 0 && column < gridSize - 1) {
+			// Possibly borked, z and y should be switched somehow
+            float zTop = vertices[i - gridSize].y;
+            float zTopRight = vertices[i - (gridSize - 1)].y;
+            float zRight = vertices[i + 1].y;
+            float zBot = vertices[i + gridSize].y;
+            float zBotLeft = vertices[i + (gridSize - 1)].y;
+            float zLeft = vertices[i - 1].y;
 
             // Inner vertice calculations can be simplified with algebra.
             // Idea for simplification: https://stackoverflow.com/questions/6656358/calculating-normals-in-a-triangle-mesh/21660173#21660173
@@ -238,16 +237,24 @@ public class TerrainMeshTools : MonoBehaviour {
      *  (along the z axis). Recalculates the normals where necessary.
      */
     public void RaiseTerrain(Vector3 location, float radius, float speed) {
-        for (int i = 0; i < vertices.Length; i++)
-        {
+        // On the first pass we move the vertices
+        for (int i = 0; i < vertices.Length; i++) {
+            Vector3 vertice = vertices[i];
+            float distVertSquared = Mathf.Pow(vertice.x - location.x, 2)
+                                    + Mathf.Pow(vertice.y - location.y, 2)
+                                    + Mathf.Pow(vertice.z - location.z, 2);
+            if (distVertSquared < Mathf.Pow(radius, 2)) { // Vertice is close enough to the center for it to be moved
+                vertices[i] = vertice + new Vector3(0, 0, speed);
+            }
+        }
+
+        // On the second pass we can recalculate the normals
+        for (int i = 0; i < vertices.Length; i++) {
             Vector3 vertice = vertices[i];
             float distVertSquared = Mathf.Pow(vertice.x - location.x, 2)
                                     + Mathf.Pow(vertice.y - location.y, 2)
                                     + Mathf.Pow(vertice.z - location.z, 2);
             if (distVertSquared < Mathf.Pow(radius + 2, 2)) { // Vertice is close enough to the center for its normal to be recalculated
-                if (distVertSquared < Mathf.Pow(radius, 2)) { // Vertice is close enough to the center to be moved
-                    vertices[i] = vertice + new Vector3(0, 0, speed);
-                }
                 RecalculateNormals(i);
             }
         }
