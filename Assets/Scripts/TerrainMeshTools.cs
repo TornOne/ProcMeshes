@@ -141,6 +141,98 @@ public class TerrainMeshTools : MonoBehaviour {
 	public void UpdateTriangles() {
 		triangles = mesh.triangles;
 	}
+
+    /** Recalculates the normal of one vertice
+     */
+    public void RecalculateNormals(int i) {
+        // Should possibly change these to be inputs or calculated somehow?
+        // The important thing, though, is not the step size but the ratio of xStep/yStep
+        int xStep = 1; 
+        int yStep = 1;
+
+        int verticeTotal = vertices.Length;
+        int gridSize = (int) Mathf.Sqrt(verticeTotal); // Assumes square grid
+        int column = i % gridSize;
+        int row = i / gridSize;
+
+        Vector3 surroundingNormalSum = new Vector3(0, 0, 0);
+        Vector3 vec1 = new Vector3(0, 0, 0);
+        Vector3 vec2 = new Vector3(0, 0, 0);
+        Vector3 tempVec = new Vector3(0, 0, 0);
+
+        if (row < gridSize - 1 && row > 0
+            && column > 0 && column < gridSize - 1)
+        {
+            float zTop = vertices[i - gridSize].z;
+            float zTopRight = vertices[i - (gridSize - 1)].z;
+            float zRight = vertices[i + 1].z;
+            float zBot = vertices[i + gridSize].z;
+            float zBotLeft = vertices[i + (gridSize - 1)].z;
+            float zLeft = vertices[i - 1].z;
+
+            // Inner vertice calculations can be simplified with algebra.
+            // Idea for simplification: https://stackoverflow.com/questions/6656358/calculating-normals-in-a-triangle-mesh/21660173#21660173
+            normals[i] = Vector3.Normalize(new Vector3(
+                                             yStep * (2 * zLeft + zTop - zTopRight - 2 * zRight - zBot + zBotLeft),
+                                             xStep * (2 * zTop + zTopRight - zRight - 2 * zBot - zBotLeft + zLeft),
+                                             xStep * yStep * 6)
+                                            );
+        }
+        else
+        {
+            // Literal edge-case:
+            // Check top-left triangle
+            if (row - 1 >= 0 && column - 1 >= 0)
+            { // It exists, now we can calculate its normal
+                vec1 = vertices[i - gridSize] - vertices[i];
+                vec2 = vertices[i - 1] - vertices[i];
+                tempVec = Vector3.Cross(vec1, vec2);
+                surroundingNormalSum += tempVec;
+            }
+            // Check top triangle
+            if (row - 1 >= 0 && column + 1 < gridSize)
+            {
+                vec1 = vertices[i - (gridSize - 1)] - vertices[i];
+                vec2 = vertices[i - gridSize] - vertices[i];
+                tempVec = Vector3.Cross(vec1, vec2);
+                surroundingNormalSum += tempVec;
+            }
+            // Check top-right triangle
+            if (row - 1 >= 0 && column + 1 < gridSize)
+            {
+                vec1 = vertices[i + 1] - vertices[i];
+                vec2 = vertices[i - (gridSize - 1)] - vertices[i];
+                tempVec = Vector3.Cross(vec1, vec2);
+                surroundingNormalSum += tempVec;
+            }
+            // Check bot-right triangle
+            if (column + 1 < gridSize && row + 1 < gridSize)
+            {
+                vec1 = vertices[i + gridSize] - vertices[i];
+                vec2 = vertices[i + 1] - vertices[i];
+                tempVec = Vector3.Cross(vec1, vec2);
+                surroundingNormalSum += tempVec;
+            }
+            // Check bot triangle
+            if (column - 1 >= 0 && row + 1 < gridSize)
+            {
+                vec1 = vertices[i + (gridSize - 1)] - vertices[i];
+                vec2 = vertices[i + gridSize] - vertices[i];
+                tempVec = Vector3.Cross(vec1, vec2);
+                surroundingNormalSum += tempVec;
+            }
+            // Check bot-left triangle
+            if (column - 1 >= 0 && row + 1 < gridSize)
+            {
+                vec1 = vertices[i - 1] - vertices[i];
+                vec2 = vertices[i + (gridSize - 1)] - vertices[i];
+                tempVec = Vector3.Cross(vec1, vec2);
+                surroundingNormalSum += tempVec;
+            }
+
+            normals[i] = Vector3.Normalize(surroundingNormalSum); // Assigns the appropriate normal the calculated value
+        }
+    }
 }
 
 //PS. mesh.MarkDynamic() once or every frame?
