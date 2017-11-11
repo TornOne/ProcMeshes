@@ -233,6 +233,25 @@ public class TerrainMeshTools : MonoBehaviour {
             normals[i] = Vector3.Normalize(surroundingNormalSum); // Assigns the appropriate normal the calculated value
         }
     }
+
+    /** Method for moving vertices up and down. Moves all vertices within radius from location by speed
+     *  (along the z axis). Recalculates the normals where necessary.
+     */
+    public void RaiseTerrain(Vector3 location, float radius, float speed) {
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            Vector3 vertice = vertices[i];
+            float distVertSquared = Mathf.Pow(vertice.x - location.x, 2)
+                                    + Mathf.Pow(vertice.y - location.y, 2)
+                                    + Mathf.Pow(vertice.z - location.z, 2);
+            if (distVertSquared < Mathf.Pow(radius + 2, 2)) { // Vertice is close enough to the center for its normal to be recalculated
+                if (distVertSquared < Mathf.Pow(radius, 2)) { // Vertice is close enough to the center to be moved
+                    vertices[i] = vertice + new Vector3(0, 0, speed);
+                }
+                RecalculateNormals(i);
+            }
+        }
+    }
 }
 
 //PS. mesh.MarkDynamic() once or every frame?
