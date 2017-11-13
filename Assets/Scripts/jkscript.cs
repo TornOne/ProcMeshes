@@ -4,10 +4,12 @@
 public class jkscript : MonoBehaviour {
 	void Start() {
 		ResetMesh(250, 1);
+		RaiseTerrainHill(new Vector3(-60.0f, 0, 0), 20.0f, 8.0f);
 	}
 
 	void Update() {
-		RaiseTerrain(new Vector3(0, 0, 0), Random.Range(1.0f, 30.0f), Random.Range(0.0f, 0.3f));
+		RaiseTerrainHill(new Vector3(0, 0, 0), Random.Range(1.0f, 30.0f), 0.3f);
+		RaiseTerrain(new Vector3(-120.0f, 0, 0), Random.Range(1.0f, 30.0f), -0.5f);
 	}
 
 	Mesh mesh;
@@ -145,9 +147,9 @@ public class jkscript : MonoBehaviour {
 	/** Recalculates the normal of one vertice
      */
 	public void RecalculateNormals(int i) {
-		// Should possibly change these to be inputs or calculated somehow
+		// Should probably change these to be inputs or calculated somehow
 		int xStep = 1;
-		int yStep = 1;
+		int zStep = 1;
 
 		int verticeTotal = vertices.Length;
 		int gridSize = (int) Mathf.Sqrt(verticeTotal); // Assumes square grid
@@ -161,21 +163,19 @@ public class jkscript : MonoBehaviour {
 
 		if (row < gridSize - 1 && row > 0
 			&& column > 0 && column < gridSize - 1) {
-			// Possibly borked, z and y should be switched somehow
-			float zTop = vertices[i - gridSize].y;
-			float zTopRight = vertices[i - (gridSize - 1)].y;
-			float zRight = vertices[i + 1].y;
-			float zBot = vertices[i + gridSize].y;
-			float zBotLeft = vertices[i + (gridSize - 1)].y;
-			float zLeft = vertices[i - 1].y;
+			float yTop = vertices[i - gridSize].y;
+			float yTopRight = vertices[i - (gridSize - 1)].y;
+			float yRight = vertices[i + 1].y;
+			float yBot = vertices[i + gridSize].y;
+			float yBotLeft = vertices[i + (gridSize - 1)].y;
+			float yLeft = vertices[i - 1].y;
 
 			// Inner vertice calculations can be simplified with algebra.
 			// Idea for simplification: https://stackoverflow.com/questions/6656358/calculating-normals-in-a-triangle-mesh/21660173#21660173
-			// Temporary minus sign. Double-check equation!
-			normals[i] = -Vector3.Normalize(new Vector3(
-											 yStep * (2 * zLeft + zTop - zTopRight - 2 * zRight - zBot + zBotLeft),
-											 xStep * (2 * zTop + zTopRight - zRight - 2 * zBot - zBotLeft + zLeft),
-											 xStep * yStep * 6)
+			normals[i] = Vector3.Normalize(new Vector3(
+											 zStep * (2 * yLeft + yTop - yTopRight - 2 * yRight - yBot + yBotLeft),
+											 xStep * zStep * 6,
+											 xStep * (2 * yTop + yTopRight - yRight - 2 * yBot - yBotLeft + yLeft))
 											);
 		} else {
 			// Literal edge-case:
@@ -227,7 +227,7 @@ public class jkscript : MonoBehaviour {
 	}
 
 	/** Method for moving vertices up and down. Moves all vertices within radius from location by speed
-     *  (along the z axis). Recalculates the normals where necessary.
+     *  (along the y axis). Recalculates the normals where necessary.
 	 *  Ignores distance in y-coordinates.
      */
 	public void RaiseTerrain(Vector3 location, float radius, float speed) {
@@ -253,6 +253,40 @@ public class jkscript : MonoBehaviour {
 		mesh.normals = normals;
 		mesh.vertices = vertices;
 	}
+
+	/** Method which raises terrain in a hill-formation (more or less)
+	 *  Recalculates normals and ignores distance on the y-axis.
+	 */
+	public void RaiseTerrainHill(Vector3 location, float radius, float speed) {
+		float radiusSquared = Mathf.Pow(radius, 2);
+		// On the first pass we move the vertices
+		for (int i = 0; i < vertices.Length; i++) {
+			Vector3 vertice = vertices[i];
+			float distVertSquared = Mathf.Pow(vertice.x - location.x, 2)
+									+ Mathf.Pow(vertice.z - location.z, 2);
+			if (distVertSquared < Mathf.Pow(radius, 2)) { // Vertice is close enough to the center for it to be moved
+				vertices[i] = vertice + Mathf.Pow(Mathf.Cos(distVertSquared / radiusSquared), 10) * new Vector3(0, speed, 0);
+			}
+		}
+
+		// On the second pass we can recalculate the normals
+		for (int i = 0; i < vertices.Length; i++) {
+			Vector3 vertice = vertices[i];
+			float distVertSquared = Mathf.Pow(vertice.x - location.x, 2)
+									+ Mathf.Pow(vertice.z - location.z, 2);
+			if (distVertSquared < Mathf.Pow(radius + 2, 2)) { // Vertice is close enough to the center for its normal to be recalculated
+				RecalculateNormals(i);
+			}
+		}
+		mesh.normals = normals;
+		mesh.vertices = vertices;
+	}
 }
 
 //PS. mesh.MarkDynamic() once or every frame?
+
+
+
+
+
+

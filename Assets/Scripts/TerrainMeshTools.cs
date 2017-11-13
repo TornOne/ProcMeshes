@@ -142,101 +142,93 @@ public class TerrainMeshTools : MonoBehaviour {
 		triangles = mesh.triangles;
 	}
 
-    /** Recalculates the normal of one vertice
+	/** Recalculates the normal of one vertice
      */
-    public void RecalculateNormals(int i) {
-        // Should possibly change these to be inputs or calculated somehow?
-        int xStep = 1; 
-        int yStep = 1;
+	public void RecalculateNormals(int i) {
+		// Should probably change these to be inputs or calculated somehow
+		int xStep = 1;
+		int zStep = 1;
 
-        int verticeTotal = vertices.Length;
-        int gridSize = (int) Mathf.Sqrt(verticeTotal); // Assumes square grid
-        int column = i % gridSize;
-        int row = i / gridSize;
+		int verticeTotal = vertices.Length;
+		int gridSize = (int) Mathf.Sqrt(verticeTotal); // Assumes square grid
+		int column = i % gridSize;
+		int row = i / gridSize;
 
-        Vector3 surroundingNormalSum = new Vector3(0, 0, 0);
-        Vector3 vec1 = new Vector3(0, 0, 0);
-        Vector3 vec2 = new Vector3(0, 0, 0);
-        Vector3 tempVec = new Vector3(0, 0, 0);
+		Vector3 surroundingNormalSum = new Vector3(0, 0, 0);
+		Vector3 vec1 = new Vector3(0, 0, 0);
+		Vector3 vec2 = new Vector3(0, 0, 0);
+		Vector3 tempVec = new Vector3(0, 0, 0);
 
-        if (row < gridSize - 1 && row > 0
-            && column > 0 && column < gridSize - 1) {
+		if (row < gridSize - 1 && row > 0
+			&& column > 0 && column < gridSize - 1) {
 			// Possibly borked, z and y should be switched somehow
-            float zTop = vertices[i - gridSize].y;
-            float zTopRight = vertices[i - (gridSize - 1)].y;
-            float zRight = vertices[i + 1].y;
-            float zBot = vertices[i + gridSize].y;
-            float zBotLeft = vertices[i + (gridSize - 1)].y;
-            float zLeft = vertices[i - 1].y;
+			float yTop = vertices[i - gridSize].y;
+			float yTopRight = vertices[i - (gridSize - 1)].y;
+			float yRight = vertices[i + 1].y;
+			float yBot = vertices[i + gridSize].y;
+			float yBotLeft = vertices[i + (gridSize - 1)].y;
+			float yLeft = vertices[i - 1].y;
 
-            // Inner vertice calculations can be simplified with algebra.
-            // Idea for simplification: https://stackoverflow.com/questions/6656358/calculating-normals-in-a-triangle-mesh/21660173#21660173
-            normals[i] = Vector3.Normalize(new Vector3(
-                                             yStep * (2 * zLeft + zTop - zTopRight - 2 * zRight - zBot + zBotLeft),
-                                             xStep * (2 * zTop + zTopRight - zRight - 2 * zBot - zBotLeft + zLeft),
-                                             xStep * yStep * 6)
-                                            );
-        }
-        else
-        {
-            // Literal edge-case:
-            // Check top-left triangle
-            if (row - 1 >= 0 && column - 1 >= 0)
-            { // It exists, now we can calculate its normal
-                vec1 = vertices[i - gridSize] - vertices[i];
-                vec2 = vertices[i - 1] - vertices[i];
-                tempVec = Vector3.Cross(vec1, vec2);
-                surroundingNormalSum += tempVec;
-            }
-            // Check top triangle
-            if (row - 1 >= 0 && column + 1 < gridSize)
-            {
-                vec1 = vertices[i - (gridSize - 1)] - vertices[i];
-                vec2 = vertices[i - gridSize] - vertices[i];
-                tempVec = Vector3.Cross(vec1, vec2);
-                surroundingNormalSum += tempVec;
-            }
-            // Check top-right triangle
-            if (row - 1 >= 0 && column + 1 < gridSize)
-            {
-                vec1 = vertices[i + 1] - vertices[i];
-                vec2 = vertices[i - (gridSize - 1)] - vertices[i];
-                tempVec = Vector3.Cross(vec1, vec2);
-                surroundingNormalSum += tempVec;
-            }
-            // Check bot-right triangle
-            if (column + 1 < gridSize && row + 1 < gridSize)
-            {
-                vec1 = vertices[i + gridSize] - vertices[i];
-                vec2 = vertices[i + 1] - vertices[i];
-                tempVec = Vector3.Cross(vec1, vec2);
-                surroundingNormalSum += tempVec;
-            }
-            // Check bot triangle
-            if (column - 1 >= 0 && row + 1 < gridSize)
-            {
-                vec1 = vertices[i + (gridSize - 1)] - vertices[i];
-                vec2 = vertices[i + gridSize] - vertices[i];
-                tempVec = Vector3.Cross(vec1, vec2);
-                surroundingNormalSum += tempVec;
-            }
-            // Check bot-left triangle
-            if (column - 1 >= 0 && row + 1 < gridSize)
-            {
-                vec1 = vertices[i - 1] - vertices[i];
-                vec2 = vertices[i + (gridSize - 1)] - vertices[i];
-                tempVec = Vector3.Cross(vec1, vec2);
-                surroundingNormalSum += tempVec;
-            }
+			// Inner vertice calculations can be simplified with algebra.
+			// Idea for simplification: https://stackoverflow.com/questions/6656358/calculating-normals-in-a-triangle-mesh/21660173#21660173
+			normals[i] = Vector3.Normalize(new Vector3(
+											 zStep * (2 * yLeft + yTop - yTopRight - 2 * yRight - yBot + yBotLeft),
+											 xStep * zStep * 6,
+											 xStep * (2 * yTop + yTopRight - yRight - 2 * yBot - yBotLeft + yLeft))
+											);
+		} else {
+			// Literal edge-case:
+			// Check top-left triangle
+			if (row - 1 >= 0 && column - 1 >= 0) { // It exists, now we can calculate its normal
+				vec1 = vertices[i - gridSize] - vertices[i];
+				vec2 = vertices[i - 1] - vertices[i];
+				tempVec = Vector3.Cross(vec1, vec2);
+				surroundingNormalSum += tempVec;
+			}
+			// Check top triangle
+			if (row - 1 >= 0 && column + 1 < gridSize) {
+				vec1 = vertices[i - (gridSize - 1)] - vertices[i];
+				vec2 = vertices[i - gridSize] - vertices[i];
+				tempVec = Vector3.Cross(vec1, vec2);
+				surroundingNormalSum += tempVec;
+			}
+			// Check top-right triangle
+			if (row - 1 >= 0 && column + 1 < gridSize) {
+				vec1 = vertices[i + 1] - vertices[i];
+				vec2 = vertices[i - (gridSize - 1)] - vertices[i];
+				tempVec = Vector3.Cross(vec1, vec2);
+				surroundingNormalSum += tempVec;
+			}
+			// Check bot-right triangle
+			if (column + 1 < gridSize && row + 1 < gridSize) {
+				vec1 = vertices[i + gridSize] - vertices[i];
+				vec2 = vertices[i + 1] - vertices[i];
+				tempVec = Vector3.Cross(vec1, vec2);
+				surroundingNormalSum += tempVec;
+			}
+			// Check bot triangle
+			if (column - 1 >= 0 && row + 1 < gridSize) {
+				vec1 = vertices[i + (gridSize - 1)] - vertices[i];
+				vec2 = vertices[i + gridSize] - vertices[i];
+				tempVec = Vector3.Cross(vec1, vec2);
+				surroundingNormalSum += tempVec;
+			}
+			// Check bot-left triangle
+			if (column - 1 >= 0 && row + 1 < gridSize) {
+				vec1 = vertices[i - 1] - vertices[i];
+				vec2 = vertices[i + (gridSize - 1)] - vertices[i];
+				tempVec = Vector3.Cross(vec1, vec2);
+				surroundingNormalSum += tempVec;
+			}
 
-            normals[i] = Vector3.Normalize(surroundingNormalSum); // Assigns the appropriate normal the calculated value
-        }
-    }
+			normals[i] = Vector3.Normalize(surroundingNormalSum); // Assigns the appropriate normal the calculated value
+		}
+	}
 
-    /** Method for moving vertices up and down. Moves all vertices within radius from location by speed
-     *  (along the z axis). Recalculates the normals where necessary.
+	/** Method for moving vertices up and down. Moves all vertices within radius from location by speed
+     *  (along the y axis). Recalculates the normals where necessary.
      */
-    public void RaiseTerrain(Vector3 location, float radius, float speed) {
+	public void RaiseTerrain(Vector3 location, float radius, float speed) {
         // On the first pass we move the vertices
         for (int i = 0; i < vertices.Length; i++) {
             Vector3 vertice = vertices[i];
@@ -259,6 +251,34 @@ public class TerrainMeshTools : MonoBehaviour {
             }
         }
     }
+
+	/** Method which raises terrain in a hill-formation (more or less)
+	 *  Recalculates normals and ignores distance on the y-axis.
+	 */
+	public void RaiseTerrainHill(Vector3 location, float radius, float speed) {
+		float radiusSquared = Mathf.Pow(radius, 2);
+		// On the first pass we move the vertices
+		for (int i = 0; i < vertices.Length; i++) {
+			Vector3 vertice = vertices[i];
+			float distVertSquared = Mathf.Pow(vertice.x - location.x, 2)
+									+ Mathf.Pow(vertice.z - location.z, 2);
+			if (distVertSquared < Mathf.Pow(radius, 2)) { // Vertice is close enough to the center for it to be moved
+				vertices[i] = vertice + Mathf.Pow(Mathf.Cos(distVertSquared / radiusSquared), 10) * new Vector3(0, speed, 0);
+			}
+		}
+
+		// On the second pass we can recalculate the normals
+		for (int i = 0; i < vertices.Length; i++) {
+			Vector3 vertice = vertices[i];
+			float distVertSquared = Mathf.Pow(vertice.x - location.x, 2)
+									+ Mathf.Pow(vertice.z - location.z, 2);
+			if (distVertSquared < Mathf.Pow(radius + 2, 2)) { // Vertice is close enough to the center for its normal to be recalculated
+				RecalculateNormals(i);
+			}
+		}
+		mesh.normals = normals;
+		mesh.vertices = vertices;
+	}
 }
 
 //PS. mesh.MarkDynamic() once or every frame?
