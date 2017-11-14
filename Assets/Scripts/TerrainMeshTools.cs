@@ -2,13 +2,15 @@
 
 [RequireComponent(typeof(MeshFilter))]
 public class TerrainMeshTools : MonoBehaviour {
-	/*void Start() {
+	void Start() {
 		ResetMesh(250, 1);
+		RaiseTerrainHill(new Vector3(-60.0f, 0, 0), 20.0f, 8.0f);
 	}
 
 	void Update() {
-		SetRandomHeights(-2.5f, 2.5f);
-	}*/
+		RaiseTerrainHill(new Vector3(0, 0, 0), Random.Range(1.0f, 30.0f), 0.3f);
+		RaiseTerrain(new Vector3(-120.0f, 0, 0), Random.Range(1.0f, 30.0f), -0.5f);
+	}
 
 	Mesh mesh;
 	Vector3[] vertices, normals;
@@ -225,6 +227,17 @@ public class TerrainMeshTools : MonoBehaviour {
 		}
 	}
 
+	public void RecalculateNormalsSurroundingPoint(Vector3 location, float radius) {
+		for (int i = 0; i < vertices.Length; i++) {
+			Vector3 vertice = vertices[i];
+			float distVertSquared = Mathf.Pow(vertice.x - location.x, 2)
+									+ Mathf.Pow(vertice.z - location.z, 2);
+			if (distVertSquared < Mathf.Pow(radius + 2, 2)) { // Vertice is close enough to the center for its normal to be recalculated
+				RecalculateNormals(i);
+			}
+		}
+	}
+
 	/** Method for moving vertices up and down. Moves all vertices within radius from location by speed
      *  (along the y axis). Recalculates the normals where necessary.
      */
@@ -240,17 +253,11 @@ public class TerrainMeshTools : MonoBehaviour {
             }
         }
 
-        // On the second pass we can recalculate the normals
-        for (int i = 0; i < vertices.Length; i++) {
-            Vector3 vertice = vertices[i];
-            float distVertSquared = Mathf.Pow(vertice.x - location.x, 2)
-                                    + Mathf.Pow(vertice.y - location.y, 2)
-                                    + Mathf.Pow(vertice.z - location.z, 2);
-            if (distVertSquared < Mathf.Pow(radius + 2, 2)) { // Vertice is close enough to the center for its normal to be recalculated
-                RecalculateNormals(i);
-            }
-        }
-    }
+		RecalculateNormalsSurroundingPoint(location, radius);
+
+		mesh.normals = normals;
+		mesh.vertices = vertices;
+	}
 
 	/** Method which raises terrain in a hill-formation (more or less)
 	 *  Recalculates normals and ignores distance on the y-axis.
@@ -267,15 +274,9 @@ public class TerrainMeshTools : MonoBehaviour {
 			}
 		}
 
-		// On the second pass we can recalculate the normals
-		for (int i = 0; i < vertices.Length; i++) {
-			Vector3 vertice = vertices[i];
-			float distVertSquared = Mathf.Pow(vertice.x - location.x, 2)
-									+ Mathf.Pow(vertice.z - location.z, 2);
-			if (distVertSquared < Mathf.Pow(radius + 2, 2)) { // Vertice is close enough to the center for its normal to be recalculated
-				RecalculateNormals(i);
-			}
-		}
+
+		RecalculateNormalsSurroundingPoint(location, radius);
+
 		mesh.normals = normals;
 		mesh.vertices = vertices;
 	}
