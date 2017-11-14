@@ -163,7 +163,6 @@ public class TerrainMeshTools : MonoBehaviour {
 
 		if (row < gridSize - 1 && row > 0
 			&& column > 0 && column < gridSize - 1) {
-			// Possibly borked, z and y should be switched somehow
 			float yTop = vertices[i - gridSize].y;
 			float yTopRight = vertices[i - (gridSize - 1)].y;
 			float yRight = vertices[i + 1].y;
@@ -240,18 +239,18 @@ public class TerrainMeshTools : MonoBehaviour {
 
 	/** Method for moving vertices up and down. Moves all vertices within radius from location by speed
      *  (along the y axis). Recalculates the normals where necessary.
+	 *  Ignores distance in y-coordinates.
      */
 	public void RaiseTerrain(Vector3 location, float radius, float speed) {
-        // On the first pass we move the vertices
-        for (int i = 0; i < vertices.Length; i++) {
-            Vector3 vertice = vertices[i];
-            float distVertSquared = Mathf.Pow(vertice.x - location.x, 2)
-                                    + Mathf.Pow(vertice.y - location.y, 2)
-                                    + Mathf.Pow(vertice.z - location.z, 2);
-            if (distVertSquared < Mathf.Pow(radius, 2)) { // Vertice is close enough to the center for it to be moved
-                vertices[i] = vertice + new Vector3(0, 0, speed);
-            }
-        }
+		// On the first pass we move the vertices
+		for (int i = 0; i < vertices.Length; i++) {
+			Vector3 vertice = vertices[i];
+			float distVertSquared = Mathf.Pow(vertice.x - location.x, 2)
+									+ Mathf.Pow(vertice.z - location.z, 2);
+			if (distVertSquared < Mathf.Pow(radius, 2)) { // Vertice is close enough to the center for it to be moved
+				vertices[i] = vertice + new Vector3(0, speed, 0);
+			}
+		}
 
 		RecalculateNormalsSurroundingPoint(location, radius);
 

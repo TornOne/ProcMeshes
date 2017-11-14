@@ -273,15 +273,8 @@ public class jkscript : MonoBehaviour {
 			}
 		}
 
-		// On the second pass we can recalculate the normals
-		for (int i = 0; i < vertices.Length; i++) {
-			Vector3 vertice = vertices[i];
-			float distVertSquared = Mathf.Pow(vertice.x - location.x, 2)
-									+ Mathf.Pow(vertice.z - location.z, 2);
-			if (distVertSquared < Mathf.Pow(radius + 2, 2)) { // Vertice is close enough to the center for its normal to be recalculated
-				RecalculateNormals(i);
-			}
-		}
+		RecalculateNormalsSurroundingPoint(location, radius);
+
 		mesh.normals = normals;
 		mesh.vertices = vertices;
 	}
