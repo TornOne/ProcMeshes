@@ -9,12 +9,15 @@ public class TerrainGenerator : MonoBehaviour {
 		tools = GetComponent<TerrainMeshTools>();
 
 		tools.ResetMesh();
-		tools.RaiseTerrainHill(new Vector3(-60.0f, 0, 0), 20.0f, 8.0f);
+		tools.RaiseTerrain(0.3f, 0.5f, 20f, 10f, false);
 	}
 
 	void Update() {
-		tools.RaiseTerrainHill(new Vector3(0, 0, 0), Random.Range(1.0f, 30.0f), 0.3f);
-		tools.RaiseTerrain(new Vector3(-120.0f, 0, 0), Random.Range(1.0f, 30.0f), -0.5f);
+		tools.RaiseTerrain(0.5f, 0.5f, 20f, Time.deltaTime, true);
+		tools.RaiseTerrain(0.1f, 0.5f, Random.Range(1f, 30f), -Time.deltaTime);
+
+		tools.SetVertices();
+		tools.RecalculateNormals();
 		tools.Colorize();
 	}
 }
