@@ -1,36 +1,39 @@
 ﻿using UnityEngine;
 
-[RequireComponent(typeof(MeshFilter))]
+[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class TerrainMeshTools : MonoBehaviour {
-	void Start() {
-		ResetMesh(250, 1);
-		RaiseTerrainHill(new Vector3(-60.0f, 0, 0), 20.0f, 8.0f);
-	}
-
-	void Update() {
-		RaiseTerrainHill(new Vector3(0, 0, 0), Random.Range(1.0f, 30.0f), 0.3f);
-		RaiseTerrain(new Vector3(-120.0f, 0, 0), Random.Range(1.0f, 30.0f), -0.5f);
-	}
-
 	Mesh mesh;
+	Texture2D texture;
 	Vector3[] vertices, normals;
+	Vector2[] uvs;
 	int[] triangles;
 
 	//Max gridSize is 254. Tiling option are 0, 1, 2.
-	public void ResetMesh(int gridSize = 100, float gridInverseDensity = 1.0f, int tiling = 1) {
+	public void ResetMesh(int gridSize = 250, float gridInverseDensity = 1.0f, int tiling = 1) {
 		mesh = new Mesh();
 		GetComponent<MeshFilter>().mesh = mesh;
 
-		#region Vertice assignment
+		#region Vertice & UV assignment
 		gridSize++; //We want a mesh with gridSize squares on each side, not vertices.
 		vertices = new Vector3[gridSize * gridSize];
+		uvs = new Vector2[vertices.Length];
 
 		for (int i = 0; i < vertices.Length; i++) {
-			vertices[i] = new Vector3(i % gridSize * gridInverseDensity - (gridSize - 1) * gridInverseDensity * 0.5f,
+			int col = i % gridSize;
+			int row = i / gridSize;
+			vertices[i] = new Vector3(col * gridInverseDensity - (gridSize - 1) * gridInverseDensity * 0.5f,
 			                          0,
-			                          i / gridSize * gridInverseDensity - (gridSize - 1) * gridInverseDensity * 0.5f);
+			                          row * gridInverseDensity - (gridSize - 1) * gridInverseDensity * 0.5f);
+			uvs[i] = new Vector2((col + 0.5f) / gridSize, (row + 0.5f) / gridSize);
 		}
 		mesh.vertices = vertices;
+		mesh.uv = uvs;
+		#endregion
+
+		#region Texture assignment
+		texture = new Texture2D(gridSize, gridSize);
+		GetComponent<MeshRenderer>().material.mainTexture = texture;
+		Colorize();
 		#endregion
 
 		#region Normal assignment
@@ -124,12 +127,54 @@ public class TerrainMeshTools : MonoBehaviour {
 		#endregion
 	}
 
+	public void Colorize(float min = -50, float max = 50) {
+		Color32[] colors = new Color32[vertices.Length];
+		float diff = max - min;
+		Color32 dBlue = new Color32(0, 21, 63, 255);
+		Color32 lBlue = new Color32(63, 191, 255, 255);
+		Color32 lGreen = new Color32(136, 204, 0, 255);
+		Color32 dGreen = new Color32(0, 63, 0, 255);
+		Color32 brown = new Color32(79, 52, 30, 255);
+		Color32 dGray = new Color32(63, 63, 63, 255);
+		Color32 white = new Color32(255, 255, 255, 255);
+
+		for (int i = 0; i < colors.Length; i++) {
+			float height = (vertices[i].y - min) / diff;
+			if (height <= 0) {
+				colors[i] = dBlue;
+			} else if (height < 0.375f) {
+				colors[i] = Color32.Lerp(dBlue, lBlue, height / 0.375f);
+			} else if (height < 0.5f) {
+				colors[i] = Color32.Lerp(lBlue, lGreen, (height - 0.375f) / 0.125f);
+			} else if (height < 0.625f) {
+				colors[i] = Color32.Lerp(lGreen, dGreen, (height - 0.5f) / 0.125f);
+			} else if (height < 0.75f) {
+				colors[i] = Color32.Lerp(dGreen, brown, (height - 0.625f) / 0.125f);
+			} else if (height < 0.875f) {
+				colors[i] = Color32.Lerp(brown, dGray, (height - 0.75f) / 0.125f);
+			} else if (height < 1f) {
+				colors[i] = Color32.Lerp(dGray, white, (height - 0.875f) / 0.125f);
+			} else {
+				colors[i] = white;
+			}
+		}
+
+		texture.SetPixels32(colors);
+		texture.Apply();
+	}
+
+	//Slower for a large amount of indices
+	public void Colorize(params int[] indices) {
+		
+	}
+
 	public void SetRandomHeights(float min = -1, float max = 1) {
 		for (int i = 0; i < vertices.Length; i++) {
 			vertices[i].y = Random.Range(min, max);
 		}
 		mesh.vertices = vertices;
 		mesh.RecalculateNormals();
+		Colorize(min, max);
 	}
 
 	public void UpdateVertices() {

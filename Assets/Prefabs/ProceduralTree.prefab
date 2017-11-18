@@ -19,9 +19,9 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 4098749931531816}
-  - component: {fileID: 114348475983716260}
   - component: {fileID: 33184400711922966}
   - component: {fileID: 23966827468972386}
+  - component: {fileID: 114348475983716260}
   m_Layer: 0
   m_Name: ProceduralTree
   m_TagString: Untagged
