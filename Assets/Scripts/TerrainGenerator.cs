@@ -2,22 +2,97 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(TerrainMeshTools))]
 public class TerrainGenerator : MonoBehaviour {
 	TerrainMeshTools tools;
+	bool geometryChanged = false;
+	public int mountainCount, lakeCount, hillCount, riverCount;
+	public float floraDensity;
+	int finishedMountainCount, finishedLakeCount, finishedHillCount, finishedRiverCount;
 
 	void Start() {
 		tools = GetComponent<TerrainMeshTools>();
-
-		tools.ResetMesh();
-		StartCoroutine(MountainRange());
-		StartCoroutine(MountainRange());
-		StartCoroutine(MountainRange());
+		Manager("generate");
 	}
 
 	void Update() {
-		tools.SetVertices();
-		tools.RecalculateNormals();
-		tools.Colorize();
+		if (geometryChanged) {
+			tools.SetVertices();
+			tools.RecalculateNormals();
+			tools.Colorize();
+			geometryChanged = false;
+		}
+	}
+
+	//Mountains -> Lakes -> Hills -> Rivers -> Flora
+	//Keeps track of generation progress, calls methods as necessary
+	void Manager(string message) {
+		if (message == "generate") {
+			tools.ResetMesh();
+
+			finishedMountainCount = 0;
+			finishedLakeCount = 0;
+			finishedHillCount = 0;
+			finishedRiverCount = 0;
+
+			if (mountainCount != 0) {
+				for (int i = 0; i < mountainCount; i++) {
+					StartCoroutine(MountainRange());
+				}
+			} else {
+				Manager("mountain");
+			}
+		}
+
+		else if (message == "mountain") {
+			finishedMountainCount++;
+
+			if (finishedMountainCount >= mountainCount) {
+				if (lakeCount != 0) {
+					for (int i = 0; i < lakeCount; i++) {
+						Lake();
+					}
+				} else {
+					Manager("lake");
+				}
+			}
+		}
+
+		else if (message == "lake") {
+			finishedLakeCount++;
+
+			if (finishedLakeCount >= lakeCount) {
+				if (hillCount != 0) {
+					for (int i = 0; i < hillCount; i++) {
+						Hill();
+					}
+				} else {
+					Manager("hill");
+				}
+			}
+		}
+
+		else if (message == "hill") {
+			finishedHillCount++;
+
+			if (finishedHillCount >= hillCount) {
+				if (riverCount != 0) {
+					for (int i = 0; i < riverCount; i++) {
+						StartCoroutine(River());
+					}
+				} else {
+					Manager("river");
+				}
+			}
+		}
+
+		else if (message == "river") {
+			finishedRiverCount++;
+
+			if (finishedRiverCount >= riverCount) {
+				StartCoroutine(Flora());
+			}
+		}
 	}
 
 	IEnumerator MountainRange(float density = 25, float duration = 12, float size = 25) {
@@ -39,7 +114,7 @@ public class TerrainGenerator : MonoBehaviour {
 		float[] heightMultipliers = new float[mountains.Length];
 
 		for (int i = 0; i < mountains.Length; i++) {
-			float offsetMultiplier = size / length / 500;
+			float offsetMultiplier = size / length / (tools.gridSize - 1) / 2;
 			float xOffset = yDiff * offsetMultiplier;
 			float yOffset = xDiff * offsetMultiplier;
 			float t = (i - 0.5f) / (mountains.Length - 1);
@@ -55,8 +130,11 @@ public class TerrainGenerator : MonoBehaviour {
 				tools.RaiseTerrain(mountains[i].x, mountains[i].y, size, size / duration * Time.deltaTime * heightMultipliers[i], true);
 			}
 
+			geometryChanged = true;
 			yield return null;
 		}
+
+		Manager("mountain");
 	}
 
 	Vector2 EdgeToPoint(int edge) {
@@ -70,5 +148,76 @@ public class TerrainGenerator : MonoBehaviour {
 		default:
 			return new Vector2(Random.Range(0f, 1f), 0f);
 		}
+	}
+
+	void Lake(float duration = 12, float size = 25) {
+		//Try to find a mostly non-elevated area
+		for (int attempt = 0; attempt < 50; attempt++) {
+			int i = Random.Range(0, tools.vertices.Length);
+			int row = i / tools.gridSize;
+			int col = i % tools.gridSize;
+			bool flatArea = true;
+			int minCol = Mathf.Max(col - 2, 0);
+			int maxCol = Mathf.Min(col + 3, tools.gridSize - 1);
+			int minRow = Mathf.Max(row - 2, 0);
+			int maxRow = Mathf.Min(row + 3, tools.gridSize - 1);
+
+			for (int y = minCol; y < maxCol && flatArea; y++) {
+				int colIndex = y * tools.gridSize;
+				for (int x = minRow; x < maxRow; x++) {
+					if (tools.vertices[colIndex + x].y > 10) {
+						flatArea = false;
+						break;
+					}
+				}
+			}
+
+			if (flatArea) {
+				StartCoroutine(MakeHill((float) col / (tools.gridSize - 1), (float) row / (tools.gridSize - 1), size, duration, false));
+				return;
+			}
+		}
+	}
+
+	IEnumerator MakeHill(float x, float y, float r, float duration, bool hill) {
+		//r *= 2; //Looks better
+
+		//Pick points around the hill / lake
+		float[] xPoints = new float[10];
+		float[] yPoints = new float[10];
+		float offset = r / (tools.gridSize - 1);
+		for (int i = 0; i < xPoints.Length; i++) {
+			xPoints[i] = x + Random.Range(-offset, offset);
+			yPoints[i] = y + Random.Range(-offset, offset);
+		}
+
+		//Raise each point until the target time has passed
+		float endTime = Time.time + duration;
+		while (Time.time < endTime) {
+			for (int i = 0; i < xPoints.Length; i++) {
+				tools.RaiseTerrain(xPoints[i], yPoints[i], r, r / duration * Time.deltaTime * (hill ? 2 : -2) / xPoints.Length, false);
+			}
+
+			geometryChanged = true;
+			yield return null;
+		}
+
+		if (hill) {
+			Manager("hill");
+		} else {
+			Manager("lake");
+		}
+	}
+
+	void Hill(float duration = 12, float size = 25) {
+		StartCoroutine(MakeHill(Random.Range(0f, 1f), Random.Range(0f, 1f), size, duration, true));
+	}
+
+	IEnumerator River() {
+		yield return null;
+	}
+
+	IEnumerator Flora() {
+		yield return null;
 	}
 }

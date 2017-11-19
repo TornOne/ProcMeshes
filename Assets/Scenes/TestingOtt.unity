@@ -207,6 +207,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d33eb2da10b2f654db1e8adea0d3a2cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  vertices: []
+  gridSize: 0
 --- !u!4 &1406484606
 Transform:
   m_ObjectHideFlags: 0
@@ -272,6 +274,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6186c2bf3fa94c418a829fabc0b8c9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mountainCount: 3
+  lakeCount: 7
+  hillCount: 5
+  riverCount: 9
+  floraDensity: 11
 --- !u!1 &1697778410
 GameObject:
   m_ObjectHideFlags: 0

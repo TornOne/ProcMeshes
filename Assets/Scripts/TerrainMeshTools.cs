@@ -4,10 +4,11 @@
 public class TerrainMeshTools : MonoBehaviour {
 	Mesh mesh;
 	Texture2D texture;
-	Vector3[] vertices, normals;
+	public Vector3[] vertices;
+	Vector3[] normals;
 	Vector2[] uvs;
 	int[] triangles;
-	int gridSize;
+	public int gridSize;
 
 	//Max gridSize is 254. Tiling option are 0, 1, 2.
 	public void ResetMesh(int gridSize = 250, float gridInverseDensity = 1.0f, int tiling = 1) {
