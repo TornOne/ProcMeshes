@@ -1,13 +1,19 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(TerrainMeshTools))]
 public class TerrainGenerator : MonoBehaviour {
 	TerrainMeshTools tools;
 	bool geometryChanged = false;
-	public int mountainCount, lakeCount, hillCount, riverCount;
-	public float floraDensity;
+
+	public Slider mountainCountSlider, lakeCountSlider, hillCountSlider, riverCountSlider; //int
+	public Slider floraDensitySlider; //Percentage
+	public Slider mountainSizeSlider, lakeSizeSlider, hillSizeSlider, riverSizeSlider;
+	public Slider durationSlider; //Divide by 5
+
+	int mountainCount, lakeCount, hillCount, riverCount;
 	int finishedMountainCount, finishedLakeCount, finishedHillCount, finishedRiverCount;
 
 	void Start() {
@@ -26,9 +32,15 @@ public class TerrainGenerator : MonoBehaviour {
 
 	//Mountains -> Lakes -> Hills -> Rivers -> Flora
 	//Keeps track of generation progress, calls methods as necessary
-	void Manager(string message) {
+	public void Manager(string message) {
 		if (message == "generate") {
 			tools.ResetMesh();
+			StopAllCoroutines();
+
+			mountainCount = (int) mountainCountSlider.value;
+			lakeCount = (int) lakeCountSlider.value;
+			hillCount = (int) hillCountSlider.value;
+			riverCount = (int) riverCountSlider.value;
 
 			finishedMountainCount = 0;
 			finishedLakeCount = 0;
@@ -37,7 +49,7 @@ public class TerrainGenerator : MonoBehaviour {
 
 			if (mountainCount != 0) {
 				for (int i = 0; i < mountainCount; i++) {
-					StartCoroutine(MountainRange());
+					StartCoroutine(MountainRange(25, durationSlider.value / 5, mountainSizeSlider.value));
 				}
 			} else {
 				Manager("mountain");
@@ -50,7 +62,7 @@ public class TerrainGenerator : MonoBehaviour {
 			if (finishedMountainCount >= mountainCount) {
 				if (lakeCount != 0) {
 					for (int i = 0; i < lakeCount; i++) {
-						Lake();
+						Lake(durationSlider.value / 5, lakeSizeSlider.value);
 					}
 				} else {
 					Manager("lake");
@@ -64,7 +76,7 @@ public class TerrainGenerator : MonoBehaviour {
 			if (finishedLakeCount >= lakeCount) {
 				if (hillCount != 0) {
 					for (int i = 0; i < hillCount; i++) {
-						Hill();
+						Hill(durationSlider.value / 5, hillSizeSlider.value);
 					}
 				} else {
 					Manager("hill");
@@ -114,7 +126,7 @@ public class TerrainGenerator : MonoBehaviour {
 		float[] heightMultipliers = new float[mountains.Length];
 
 		for (int i = 0; i < mountains.Length; i++) {
-			float offsetMultiplier = size / length / (tools.gridSize - 1) / 2;
+			float offsetMultiplier = size / length / tools.gridSize / 2;
 			float xOffset = yDiff * offsetMultiplier;
 			float yOffset = xDiff * offsetMultiplier;
 			float t = (i - 0.5f) / (mountains.Length - 1);
@@ -154,16 +166,16 @@ public class TerrainGenerator : MonoBehaviour {
 		//Try to find a mostly non-elevated area
 		for (int attempt = 0; attempt < 50; attempt++) {
 			int i = Random.Range(0, tools.vertices.Length);
-			int row = i / tools.gridSize;
-			int col = i % tools.gridSize;
+			int row = i / (tools.gridSize + 1);
+			int col = i % (tools.gridSize + 1);
 			bool flatArea = true;
 			int minCol = Mathf.Max(col - 2, 0);
-			int maxCol = Mathf.Min(col + 3, tools.gridSize - 1);
+			int maxCol = Mathf.Min(col + 3, tools.gridSize);
 			int minRow = Mathf.Max(row - 2, 0);
-			int maxRow = Mathf.Min(row + 3, tools.gridSize - 1);
+			int maxRow = Mathf.Min(row + 3, tools.gridSize);
 
 			for (int y = minCol; y < maxCol && flatArea; y++) {
-				int colIndex = y * tools.gridSize;
+				int colIndex = y * (tools.gridSize + 1);
 				for (int x = minRow; x < maxRow; x++) {
 					if (tools.vertices[colIndex + x].y > 10) {
 						flatArea = false;
@@ -173,19 +185,17 @@ public class TerrainGenerator : MonoBehaviour {
 			}
 
 			if (flatArea) {
-				StartCoroutine(MakeHill((float) col / (tools.gridSize - 1), (float) row / (tools.gridSize - 1), size, duration, false));
+				StartCoroutine(MakeHill((float) col / tools.gridSize, (float) row / tools.gridSize, size, duration, false));
 				return;
 			}
 		}
 	}
 
 	IEnumerator MakeHill(float x, float y, float r, float duration, bool hill) {
-		//r *= 2; //Looks better
-
 		//Pick points around the hill / lake
 		float[] xPoints = new float[10];
 		float[] yPoints = new float[10];
-		float offset = r / (tools.gridSize - 1);
+		float offset = r / tools.gridSize;
 		for (int i = 0; i < xPoints.Length; i++) {
 			xPoints[i] = x + Random.Range(-offset, offset);
 			yPoints[i] = y + Random.Range(-offset, offset);

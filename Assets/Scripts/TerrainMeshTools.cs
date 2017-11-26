@@ -204,9 +204,9 @@ public class TerrainMeshTools : MonoBehaviour {
 		x *= gridSize;
 		y *= gridSize;
 		int xMin = Mathf.Max(0, Mathf.CeilToInt(x - r));
-		int xMax = Mathf.Min(gridSize, Mathf.CeilToInt(x + r));
+		int xMax = Mathf.Min(gridSize + 1, Mathf.CeilToInt(x + r));
 		int yMin = Mathf.Max(0, Mathf.CeilToInt(y - r));
-		int yMax = Mathf.Min(gridSize, Mathf.CeilToInt(y + r));
+		int yMax = Mathf.Min(gridSize + 1, Mathf.CeilToInt(y + r));
 
 		//Only check vertices in a square within r vertices of (x, y)
 		for (int row = yMin; row < yMax; row++) {

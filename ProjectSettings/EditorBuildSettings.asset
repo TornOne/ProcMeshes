@@ -9,5 +9,5 @@ EditorBuildSettings:
     path: Assets/Scenes/Main Menu.unity
     guid: f4d16079511129c4a9be29c28025bcb8
   - enabled: 1
-    path: Assets/Scenes/TestingOtt.unity
-    guid: 14b0a1287781abe4b88686b4db2cc90e
+    path: Assets/Scenes/Terrain Generator.unity
+    guid: 7d0f2542564315e418cac3ab70488865
