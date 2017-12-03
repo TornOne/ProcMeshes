@@ -21,9 +21,10 @@ GameObject:
   - component: {fileID: 4098749931531816}
   - component: {fileID: 33184400711922966}
   - component: {fileID: 23966827468972386}
-  - component: {fileID: 114348475983716260}
+  - component: {fileID: 114829879609179218}
+  - component: {fileID: 114337950628338182}
   m_Layer: 0
-  m_Name: ProceduralTree
+  m_Name: TreeNoLeaves
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82,8 +83,8 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1444475891292786}
-  m_Mesh: {fileID: 0}
---- !u!114 &114348475983716260
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &114337950628338182
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -91,6 +92,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 1444475891292786}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b9e99f340464b9a40a8ebf8c098fc9e4, type: 3}
+  m_Script: {fileID: 11500000, guid: 775ed115c254c1e4da0a0bc4c2eb0cfc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &114829879609179218
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1444475891292786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3646a5d76c6a3db43b0e4648ae3206da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

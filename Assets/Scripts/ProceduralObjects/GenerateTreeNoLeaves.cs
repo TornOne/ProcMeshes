@@ -1,10 +1,11 @@
 ﻿using UnityEngine;
 
-public class ProceduralTreeGeneration : MonoBehaviour {
+public class GenerateTreeNoLeaves : MonoBehaviour {
     private float baseLength = 6.0F; // base branch length
-    private float baseRadius = 0.3F; // base branch width
+    private float baseRadius = 0.7F; // base branch width 0.3
     private float branchFactor = 0.8F; // branch narrower and wider end width ratio
     private float sizeFactor = 0.8F; // branch length and width change per recursive step
+    private float leavesSizeFactor = 5.0F;
 
     private float directionRange = 180; // direction range for the second branch, considering the direction of the first
     private float lowerBranchMinAngle = 45; //
@@ -16,16 +17,20 @@ public class ProceduralTreeGeneration : MonoBehaviour {
     private float pEqualBranch = 0.5F; // chance of two equally sized branches
     //            pSmallerBranch = 1.0 - pNoBranch - pDoublEqualBranch; // chance of one bigger and one smaller branch
 
+    private Color treeColor = new Color(0.36F, 0.25F, 0.18F, 1.0F);
+
+    private GeneralMethods met;
+
     void Start() {
-        GetComponent<MeshFilter>().mesh = GenerateTree(6);
-        GetComponent<Renderer>().material.color = new Color(0.78F, 0.62F, 0.39F, 1.0F);
+        met = GetComponent<GeneralMethods>();
+        Mesh mesh = GenerateRecursiveTree(6);
+        mesh = met.ConvertToFlat(mesh);
+        GetComponent<MeshFilter>().mesh = mesh;
+        GetComponent<Renderer>().material.color = treeColor;
+        GetComponent<Renderer>().material.SetFloat("_Glossiness", 0.0F);
     }
 
-    void Update() {
-
-    }
-
-    Mesh GenerateTree(int n) {
+    private Mesh GenerateRecursiveTree(int n) {
         // Generates a self-similar tree mesh of n iterations
         // invariant: first 8 vertices of the returned mesh must form the bottom octagon (for connecting meshes)
         Mesh whole = new Mesh();
@@ -33,9 +38,9 @@ public class ProceduralTreeGeneration : MonoBehaviour {
         int[] wholeTriangles;
 
         Vector3[] bottom = Octagon();
-        bottom = ApplyTransformation(bottom, Scale(baseRadius, 0, baseRadius));
+        bottom = met.ApplyTransformation(bottom, met.Scale(baseRadius, 0, baseRadius));
 
-        if (n <= 1) { // last branch, thus a cone
+        if (n <= 1) { // last branch 
             wholeVertices = new Vector3[9];
             for (int i = 0; i < 8; i++) {
                 wholeVertices[i] = bottom[i];
@@ -59,11 +64,11 @@ public class ProceduralTreeGeneration : MonoBehaviour {
         // is not last branch
         float r = (float)Random.Range(0.0F, 1.0F);
         if (r < pNoBranch) { // a single branch continues, only direction might change
-            Mesh onlyBranch = GenerateTree(n - 1);
+            Mesh onlyBranch = GenerateRecursiveTree(n - 1);
             float direction = Random.Range(0, 360);
             float angle = Random.Range(upperBranchMinAngle, upperBranchMaxAngle);
             Matrix4x4 branchMatrix = GenerateBranchMatrix(direction, angle);
-            onlyBranch.vertices = ApplyTransformation(onlyBranch.vertices, branchMatrix);
+            onlyBranch.vertices = met.ApplyTransformation(onlyBranch.vertices, branchMatrix);
 
             Vector3[] top = GetTop();
             Vector3[] baseVertices = new Vector3[16];
@@ -83,7 +88,7 @@ public class ProceduralTreeGeneration : MonoBehaviour {
         else { // branches to two subbrances
             // first
 
-            Mesh firstBranch = GenerateTree(n - 1);
+            Mesh firstBranch = GenerateRecursiveTree(n - 1);
 
             float directionFirst = Random.Range(0, 360);
             float angleFirst;
@@ -95,22 +100,22 @@ public class ProceduralTreeGeneration : MonoBehaviour {
             }
 
             Matrix4x4 firstBranchMatrix = GenerateBranchMatrix(directionFirst, angleFirst);
-            firstBranch.vertices = ApplyTransformation(firstBranch.vertices, firstBranchMatrix);
+            firstBranch.vertices = met.ApplyTransformation(firstBranch.vertices, firstBranchMatrix);
 
             // second branch
             Mesh secondBranch;
             if (r < pNoBranch + pEqualBranch) { // branches to two (n - 1) subbranches
-                secondBranch = GenerateTree(n - 1);
+                secondBranch = GenerateRecursiveTree(n - 1);
             }
             else { // branches to one (n - 1) and one (n - 2) subbranches
-                secondBranch = GenerateTree(n - 2);
+                secondBranch = GenerateRecursiveTree(n - 2);
             }
 
             float directionSecond = Random.Range(directionFirst + 180 - (directionRange / 2), directionFirst + 180 + (directionRange / 2));
             float angleSecond = Random.Range(lowerBranchMinAngle, lowerBranchMaxAngle);
 
             Matrix4x4 secondBranchMatrix = GenerateBranchMatrix(directionSecond, angleSecond);
-            secondBranch.vertices = ApplyTransformation(secondBranch.vertices, secondBranchMatrix);
+            secondBranch.vertices = met.ApplyTransformation(secondBranch.vertices, secondBranchMatrix);
 
             // whole
             Vector3[] top = GetTop();
@@ -136,26 +141,26 @@ public class ProceduralTreeGeneration : MonoBehaviour {
 
     private Vector3[] GetTop() {
         Vector3[] top = Octagon();
-        Matrix4x4 scaleTop = Scale(baseRadius * branchFactor, 0, baseRadius * branchFactor);
-        Matrix4x4 translateTop = Translate(0, baseLength, 0);
-        return ApplyTransformation(top, translateTop * scaleTop);
+        Matrix4x4 scaleTop = met.Scale(baseRadius * branchFactor, 0, baseRadius * branchFactor);
+        Matrix4x4 translateTop = met.Translate(0, baseLength, 0);
+        return met.ApplyTransformation(top, translateTop * scaleTop);
     }
 
     private Matrix4x4 GenerateBranchMatrix(float direction, float angle) {
         float baseTopRadius = baseRadius * branchFactor;
         float firstBottomRadius = baseRadius * sizeFactor;
 
-        float h = (float)System.Math.Sin(Radians(angle)) * firstBottomRadius;
-        float l = baseTopRadius - (float)System.Math.Cos(Radians(angle)) * firstBottomRadius;
-        float lx = l * (float)System.Math.Cos(Radians(direction));
-        float lz = l * (float)System.Math.Sin(Radians(direction));
+        float h = (float)System.Math.Sin(met.Radians(angle)) * firstBottomRadius;
+        float l = baseTopRadius - (float)System.Math.Cos(met.Radians(angle)) * firstBottomRadius;
+        float lx = l * (float)System.Math.Cos(met.Radians(direction));
+        float lz = l * (float)System.Math.Sin(met.Radians(direction));
 
-        Matrix4x4 scaleBranch = Scale(sizeFactor, sizeFactor, sizeFactor);
-        Matrix4x4 rotateBranch1 = Rotate(0, direction, 0);
-        Matrix4x4 rotateBranch2 = Rotate(0, 0, angle);
-        Matrix4x4 rotateBranch3 = Rotate(0, -direction, 0);
-        Matrix4x4 translateBranch1 = Translate(0, baseLength, 0);
-        Matrix4x4 translateBranch2 = Translate(-lx, h, -lz);
+        Matrix4x4 scaleBranch = met.Scale(sizeFactor, sizeFactor, sizeFactor);
+        Matrix4x4 rotateBranch1 = met.Rotate(0, direction, 0);
+        Matrix4x4 rotateBranch2 = met.Rotate(0, 0, angle);
+        Matrix4x4 rotateBranch3 = met.Rotate(0, -direction, 0);
+        Matrix4x4 translateBranch1 = met.Translate(0, baseLength, 0);
+        Matrix4x4 translateBranch2 = met.Translate(-lx, h, -lz);
         Matrix4x4 stacked = translateBranch2 * translateBranch1 * rotateBranch3 * rotateBranch2 * rotateBranch1 * scaleBranch;
         return stacked;
     }
@@ -214,30 +219,5 @@ public class ProceduralTreeGeneration : MonoBehaviour {
         combined.vertices = combinedVertices;
         combined.triangles = combinedTriangles;
         return combined;
-    }
-
-    static Matrix4x4 Scale(float x, float y, float z) {
-        return Matrix4x4.Scale(new Vector3(x, y, z));
-    }
-
-    static Matrix4x4 Translate(float x, float y, float z) {
-        return Matrix4x4.Translate(new Vector3(x, y, z));
-    }
-
-    static Matrix4x4 Rotate(float x, float y, float z) {
-        return Matrix4x4.Rotate(Quaternion.Euler(x, y, z));
-    }
-    
-    static Vector3[] ApplyTransformation(Vector3[] origVertices, Matrix4x4 mat) {
-        Vector3[] newVertices = new Vector3[origVertices.Length];
-        for (int i = 0; i < origVertices.Length; i++) {
-            newVertices[i] = mat.MultiplyPoint3x4(origVertices[i]);
-        }
-        return newVertices;
-    }
-    
-    static float Radians(float angleInDegrees) {
-        // converts angle from degrees to radians
-        return (float)(System.Math.PI / 180) * angleInDegrees;
     }
 }
