@@ -6,21 +6,26 @@ public class GeneralMethods : MonoBehaviour {
 
     public Mesh ConvertToFlat(Mesh original) {
         // converts the mesh to nave no shared vertices, for the low poly look
-        Vector3[] origVertices = original.vertices;
-        int[] origTriangles = original.triangles;
-        Vector3[] newVertices = new Vector3[origTriangles.Length];
-        int[] newTriangles = new int[origTriangles.Length];
-
-        for (int i = 0; i < origTriangles.Length; i += 3) {
-            for (int j = i; j < i + 3; j++) {
-                newVertices[j] = origVertices[origTriangles[j]];
-                newTriangles[j] = j;
-            }
-        }
-
         Mesh newMesh = new Mesh();
+        newMesh.subMeshCount = original.subMeshCount;
+        int trianglesSum = 0;
+        for (int i = 0; i < original.subMeshCount; i++) {
+            trianglesSum += original.GetTriangles(i).Length; 
+        }
+        newMesh.vertices = new Vector3[trianglesSum];
+        Vector3[] newVertices = new Vector3[trianglesSum];
+        int offset = 0;
+        for (int sub = 0; sub < original.subMeshCount; sub++) {
+            int[] oldTriangles = original.GetTriangles(sub);
+            int[] newTriangles = new int[oldTriangles.Length];
+            for (int i = 0; i < oldTriangles.Length; i++) {
+                newVertices[offset + i] = original.vertices[oldTriangles[i]];
+                newTriangles[i] = offset + i;
+            }
+            offset += oldTriangles.Length;
+            newMesh.SetTriangles(newTriangles, sub, false);
+        }
         newMesh.vertices = newVertices;
-        newMesh.triangles = newTriangles;
         newMesh.RecalculateNormals();
         return newMesh;
     }
