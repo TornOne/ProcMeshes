@@ -27,6 +27,7 @@ public class GeneralMethods : MonoBehaviour {
         }
         newMesh.vertices = newVertices;
         newMesh.RecalculateNormals();
+		newMesh.RecalculateBounds();
         return newMesh;
     }
 

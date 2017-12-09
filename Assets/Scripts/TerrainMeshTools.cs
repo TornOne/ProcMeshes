@@ -242,6 +242,10 @@ public class TerrainMeshTools : MonoBehaviour {
 		mesh.RecalculateNormals();
 	}
 
+	public void RecalculateBounds() {
+		mesh.RecalculateBounds();
+	}
+
 	public void GetVertices() {
 		vertices = mesh.vertices;
 	}

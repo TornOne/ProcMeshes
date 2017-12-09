@@ -779,7 +779,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &210946892
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1067,7 +1067,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 100
   m_WholeNumbers: 1
-  m_Value: 11
+  m_Value: 15
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
@@ -1346,7 +1346,7 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.65882355, g: 0.80784315, b: 1, a: 0.7529412}
-  m_Text: 11
+  m_Text: 15
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0
@@ -1644,7 +1644,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &409274388
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2429,7 +2429,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &600884043
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4037,7 +4037,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1174651187
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4962,6 +4962,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d6186c2bf3fa94c418a829fabc0b8c9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  bush: {fileID: 1007379912348900, guid: 6340cfae41b50ae4cba8c4b483619891, type: 2}
+  rock: {fileID: 1003606848786068, guid: 62f2e38682b85ca40864e1a87b824ffd, type: 2}
+  tree: {fileID: 1758968790307282, guid: df0bb3ba9c7b04946a1846d7d5786534, type: 2}
+  deadTree: {fileID: 1444475891292786, guid: b0d6745d68785b4438e1e39025f596cb, type: 2}
   mountainCountSlider: {fileID: 317307550}
   lakeCountSlider: {fileID: 16542817}
   hillCountSlider: {fileID: 2118177196}
@@ -5410,7 +5414,7 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.65882355, g: 0.80784315, b: 1, a: 0.7529412}
-  m_Text: 60
+  m_Text: 48
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0
@@ -5978,7 +5982,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 60
+  m_Text: 48
 --- !u!222 &1576153846
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -6275,7 +6279,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1740406103
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6715,9 +6719,9 @@ MonoBehaviour:
   m_HandleRect: {fileID: 152441769}
   m_Direction: 0
   m_MinValue: 0
-  m_MaxValue: 600
+  m_MaxValue: 480
   m_WholeNumbers: 1
-  m_Value: 60
+  m_Value: 48
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
