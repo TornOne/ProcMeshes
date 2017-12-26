@@ -6,12 +6,14 @@ using UnityEngine.UI;
 [RequireComponent(typeof(TerrainMeshTools))]
 public class jk2 : MonoBehaviour {
 	TerrainMeshTools tools;
+	List<GameObject> flora = new List<GameObject>();
+	public GameObject bush, rock, tree, deadTree;
 	bool geometryChanged = false;
 
 	public Slider mountainCountSlider, lakeCountSlider, hillCountSlider, riverCountSlider; //int
-	public Slider floraDensitySlider; //Percentage
+	public Slider floraDensitySlider; //Permille
 	public Slider mountainSizeSlider, lakeSizeSlider, hillSizeSlider, riverSizeSlider;
-	public Slider durationSlider; //Divide by 5
+	public Slider durationSlider; //Divide by 4
 
 	int mountainCount, lakeCount, hillCount, riverCount;
 	int finishedMountainCount, finishedLakeCount, finishedHillCount, finishedRiverCount;
@@ -34,8 +36,12 @@ public class jk2 : MonoBehaviour {
 	//Keeps track of generation progress, calls methods as necessary
 	public void Manager(string message) {
 		if (message == "generate") {
-			tools.ResetMesh();
 			StopAllCoroutines();
+			tools.ResetMesh();
+			foreach (GameObject o in flora) {
+				Destroy(o);
+			}
+			flora.Clear();
 
 			mountainCount = (int) mountainCountSlider.value;
 			lakeCount = (int) lakeCountSlider.value;
@@ -49,7 +55,7 @@ public class jk2 : MonoBehaviour {
 
 			if (mountainCount != 0) {
 				for (int i = 0; i < mountainCount; i++) {
-					StartCoroutine(MountainRange(25, durationSlider.value / 5, mountainSizeSlider.value));
+					StartCoroutine(MountainRange(25, durationSlider.value / 4, mountainSizeSlider.value));
 				}
 			} else {
 				Manager("mountain");
@@ -58,9 +64,10 @@ public class jk2 : MonoBehaviour {
 			finishedMountainCount++;
 
 			if (finishedMountainCount >= mountainCount) {
+				tools.RecalculateBounds();
 				if (lakeCount != 0) {
 					for (int i = 0; i < lakeCount; i++) {
-						Lake(durationSlider.value / 5, lakeSizeSlider.value);
+						Lake(durationSlider.value / 4, lakeSizeSlider.value);
 					}
 				} else {
 					Manager("lake");
@@ -70,9 +77,10 @@ public class jk2 : MonoBehaviour {
 			finishedLakeCount++;
 
 			if (finishedLakeCount >= lakeCount) {
+				tools.RecalculateBounds();
 				if (hillCount != 0) {
 					for (int i = 0; i < hillCount; i++) {
-						Hill(durationSlider.value / 5, hillSizeSlider.value);
+						Hill(durationSlider.value / 4, hillSizeSlider.value);
 					}
 				} else {
 					Manager("hill");
@@ -82,6 +90,7 @@ public class jk2 : MonoBehaviour {
 			finishedHillCount++;
 
 			if (finishedHillCount >= hillCount) {
+				tools.RecalculateBounds();
 				if (riverCount != 0) {
 					for (int i = 0; i < riverCount; i++) {
 						StartCoroutine(River());
@@ -94,7 +103,8 @@ public class jk2 : MonoBehaviour {
 			finishedRiverCount++;
 
 			if (finishedRiverCount >= riverCount) {
-				StartCoroutine(Flora());
+				tools.RecalculateBounds();
+				StartCoroutine(Flora(durationSlider.value / 4));
 			}
 		}
 	}
@@ -215,8 +225,53 @@ public class jk2 : MonoBehaviour {
 		StartCoroutine(MakeHill(Random.Range(0f, 1f), Random.Range(0f, 1f), size, duration, true));
 	}
 
+	IEnumerator GrowFlora(GameObject flora, float duration, float size) {
+		float endTime = Time.time + duration;
+		flora.transform.localScale = Vector3.zero;
+
+		while (Time.time < endTime) {
+			float scale = size / duration * Time.deltaTime;
+			flora.transform.localScale += new Vector3(scale, scale, scale);
+			yield return null;
+		}
+	}
+
+	IEnumerator Flora(float duration = 12) {
+		float density = floraDensitySlider.value / 1000;
+
+		foreach (Vector3 vertex in tools.vertices) {
+			if (Random.Range(0f, 1f) > density || vertex.y >= 50) {
+				continue;
+			}
+			GameObject o;
+			if (vertex.y < 0 || vertex.y > 40) {
+				o = Instantiate(rock, vertex, Quaternion.identity);
+				StartCoroutine(GrowFlora(o, duration, 0.5f));
+			} else {
+				float random = Random.Range(0f, 1f);
+
+				if (random < 0.1f) {
+					o = Instantiate(rock, vertex, Quaternion.identity);
+					StartCoroutine(GrowFlora(o, duration, 0.5f));
+				} else if (random < 0.1f + Mathf.Lerp(0.3f, 0.2f, vertex.y / 40)) {
+					o = Instantiate(bush, vertex, Quaternion.identity);
+					StartCoroutine(GrowFlora(o, duration, 1));
+				} else if (random < 0.1f + Mathf.Lerp(0.8f, 0.2f, vertex.y / 40)) {
+					o = Instantiate(tree, vertex, Quaternion.identity);
+					StartCoroutine(GrowFlora(o, duration, 0.5f));
+				} else {
+					o = Instantiate(deadTree, vertex, Quaternion.identity);
+					StartCoroutine(GrowFlora(o, duration, 0.5f));
+				}
+			}
+			flora.Add(o);
+			yield return null;
+		}
+	}
+
+	// //Rivers seem to be ugly to implement and we can't actually indicate water above sea level anyways.
 	IEnumerator River(float duration = 12, float size = 25) {
-		Hashtable squaresVisited = new Hashtable();
+		Dictionary<int, int> squaresVisited = new Dictionary<int, int>();
 
 		int maxIndex = 0;
 		float maxHeight = float.MinValue;
@@ -265,10 +320,10 @@ public class jk2 : MonoBehaviour {
 			row = (int) coordV * tools.gridSize;
 
 			// Check for cycles
-			string key = col + "," + row;
-			if (squaresVisited.Contains(key)) {
-				squaresVisited.Add(key, 1 + squaresVisited.GetHash(key));
-				if (squaresVisited.GetHash(key) > 2) { // We've very likely reached a cycle
+			int key = col + row * tools.gridSize;
+			if (squaresVisited.ContainsKey(key)) {
+				squaresVisited.Add(key, 1 + squaresVisited[key]);
+				if (squaresVisited[key] > 2) { // We've very likely reached a cycle
 					running = false;
 				}
 			} else {
@@ -280,7 +335,7 @@ public class jk2 : MonoBehaviour {
 			}
 		} while (running);
 
-		for (int i = 0; i < uCoordinates.length(); i++) {
+		for (int i = 0; i < uCoordinates.Count; i++) {
 			tools.RaiseTerrain(uCoordinates[i], vCoordinates[i], size, size / duration * Time.deltaTime, true);
 		}
 
@@ -350,3 +405,5 @@ public class jk2 : MonoBehaviour {
 		yield return null;
 	}
 }
+
+

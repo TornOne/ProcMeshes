@@ -5,7 +5,7 @@ public class TerrainMeshTools : MonoBehaviour {
 	Mesh mesh;
 	Texture2D texture;
 	public Vector3[] vertices;
-	Vector3[] normals;
+	public Vector3[] normals;
 	Vector2[] uvs;
 	int[] triangles;
 	public int gridSize;
@@ -223,6 +223,39 @@ public class TerrainMeshTools : MonoBehaviour {
 						vertices[rowIndex + col] += new Vector3(0, Mathf.Pow(1 - dist / r, 2) * speed, 0);
 					} else {
 						vertices[rowIndex + col] += new Vector3(0, (Mathf.Cos(dist / r * Mathf.PI) / 2 + 0.5f) * speed, 0);
+					}
+				}
+			}
+		}
+	}
+
+	// Almost the same as RaiseTerrain, except it doesn't lower things under sea level very much
+	public void RaiseTerrainRiver(float x, float y, float r, float speed, bool pointy) {
+		float maxDepth = 20; // How deep should the rivers be (at maximum)
+
+		x *= gridSize;
+		y *= gridSize;
+		int xMin = Mathf.Max(0, Mathf.CeilToInt(x - r));
+		int xMax = Mathf.Min(gridSize + 1, Mathf.CeilToInt(x + r));
+		int yMin = Mathf.Max(0, Mathf.CeilToInt(y - r));
+		int yMax = Mathf.Min(gridSize + 1, Mathf.CeilToInt(y + r));
+
+		//Only check vertices in a square within r vertices of (x, y)
+		for (int row = yMin; row < yMax; row++) {
+			float yDist = y - row;
+			float yDist2 = yDist * yDist;
+			int rowIndex = row * (gridSize + 1);
+
+			for (int col = xMin; col < xMax; col++) {
+				float xDist = x - col;
+				float dist = Mathf.Sqrt(yDist2 + xDist * xDist);
+
+				if (dist < r) { //Vertice is within radius r
+					float seaLevelCoefficient = (Mathf.Max(Mathf.Min(vertices[rowIndex + col].y, 0), -maxDepth) + maxDepth) / maxDepth;
+					if (pointy) {
+						vertices[rowIndex + col] += new Vector3(0, Mathf.Pow(1 - dist / r, 2) * speed * seaLevelCoefficient, 0);
+					} else {
+						vertices[rowIndex + col] += new Vector3(0, (Mathf.Cos(dist / r * Mathf.PI) / 2 + 0.5f) * speed * seaLevelCoefficient, 0);
 					}
 				}
 			}

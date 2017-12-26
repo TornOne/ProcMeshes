@@ -233,10 +233,137 @@ public class TerrainGenerator : MonoBehaviour {
 		StartCoroutine(MakeHill(Random.Range(0f, 1f), Random.Range(0f, 1f), size, duration, true));
 	}
 
-	//Rivers seem to be ugly to implement and we can't actually indicate water above sea level anyways.
-	IEnumerator River() {
+	// //Rivers seem to be ugly to implement and we can't actually indicate water above sea level anyways.
+	IEnumerator River(float duration = 20, float size = 4.0f) {
+
+		//	tools.RecalculateNormals();
+		tools.GetNormals();
+
+		float momentum = 0.9f; // How much the river wants to keep going in the same direction
+		float turbulence = 0.9f; // How much the river turns randomly from the slope's normal
+
+		float endTime = Time.time + duration;
+
+		Dictionary<int, int> squaresVisited = new Dictionary<int, int>();
+
+		int maxIndex = 0;
+		float maxHeight = float.MinValue;
+
+		float stepLength = 1.0f / tools.gridSize;
+		float raiseTerrainStepLength = stepLength / 10; // The smaller this is, the smoother the rivers are
+
+
+		for (int attempt = 0; attempt < 20; attempt++) {
+			int index = Random.Range(0, tools.vertices.Length);
+			if (tools.vertices[index].y > maxHeight) {
+				maxHeight = tools.vertices[index].y;
+				maxIndex = index;
+			}
+		}
+
+		int col = maxIndex % (tools.gridSize + 1);
+		int row = maxIndex / (tools.gridSize + 1);
+
+		float coordU = (float) col / tools.gridSize;
+		float coordV = (float) row / tools.gridSize;
+
+		List<float> uCoordinates = new List<float>();
+		List<float> vCoordinates = new List<float>();
+		List<float> pointNormalYCoord = new List<float>();
+
+		uCoordinates.Add(coordU);
+		vCoordinates.Add(coordV);
+		pointNormalYCoord.Add(tools.normals[maxIndex].y);
+
+		bool running = true;
+		Vector3 momentumVector = new Vector3(0, 0, 0);
+
+
+		do {
+			int index = col + row * (tools.gridSize + 1);
+
+			Vector3 normalBotLeft = tools.normals[index];
+			Vector3 normalTopLeft = tools.normals[index + tools.gridSize + 1];
+			Vector3 normalTopRight = tools.normals[index + tools.gridSize + 1 + 1];
+			Vector3 normalBotRight = tools.normals[index + 1];
+			// Debug.Log(normalBotLeft + " " + normalBotRight + " " + normalTopLeft + " " + normalTopRight);
+
+			Vector3 surroundingNormal = normalBotLeft + normalTopLeft + normalTopRight + normalBotRight;
+
+			Vector3 surroundingNormalPlanar = new Vector3(surroundingNormal.x, 0, surroundingNormal.z);
+
+			surroundingNormalPlanar = (surroundingNormalPlanar).normalized * stepLength;
+
+			if (Vector3.Dot(momentumVector, surroundingNormalPlanar) > -stepLength * stepLength / 4) { // Keep momentum as long as we're not going too steep a hill
+				surroundingNormalPlanar += momentumVector;
+			}
+
+
+			// Apply turbulence:
+			float randomTurn = Random.Range(-turbulence, turbulence) * surroundingNormal.y / 4;
+			surroundingNormalPlanar += randomTurn * Vector3.Cross(surroundingNormalPlanar, new Vector3(0, 1, 0));
+			// Debug.Log(randomTurn * Vector3.Cross(surroundingNormalPlanar, new Vector3(0, 1, 0)));
+
+
+			momentumVector = surroundingNormalPlanar * momentum * (surroundingNormal.y / 4) * (surroundingNormal.y / 4);
+
+			coordU += surroundingNormalPlanar.x;
+			coordV += surroundingNormalPlanar.z;
+
+			pointNormalYCoord.Add(surroundingNormal.y / 4);
+			uCoordinates.Add(coordU);
+			vCoordinates.Add(coordV);
+
+			col = (int) (coordU * tools.gridSize);
+			row = (int) (coordV * tools.gridSize);
+
+			// Check for cycles
+			int key = col + row * tools.gridSize;
+			if (squaresVisited.ContainsKey(key)) {
+				int value = squaresVisited[key];
+				squaresVisited.Remove(key);
+				squaresVisited.Add(key, 1 + value);
+				if (squaresVisited[key] > 2) { // We've very likely reached a cycle
+					running = false;
+				}
+			} else {
+				squaresVisited.Add(key, 1);
+			}
+
+			if (col > tools.gridSize || row > tools.gridSize || col < 0 || row < 0) { // Check if we've run out of the map
+				running = false;
+			}
+		} while (running);
+	
+
+		while (Time.time < endTime) {
+			for (int i = 0; i < uCoordinates.Count - 1; i++) {
+				int raiseTerrainSteps = (int) (Mathf.Sqrt(Mathf.Pow(uCoordinates[i] - uCoordinates[i + 1], 2)
+														+ Mathf.Pow(vCoordinates[i] - vCoordinates[i + 1], 2))
+														/ raiseTerrainStepLength) + 2; // Add some number just so we don't get 0 steps
+				float nextPointVecUCoord = (uCoordinates[i + 1] - uCoordinates[i]) / raiseTerrainSteps;
+				float nextPointVecVCoord = (vCoordinates[i + 1] - vCoordinates[i]) / raiseTerrainSteps;
+				
+				for (int j = 0; j < raiseTerrainSteps - 1; j++) { // Don't raise terrain at the endpoint
+					tools.RaiseTerrainRiver(uCoordinates[i] + j * nextPointVecUCoord, vCoordinates[i] + j * nextPointVecVCoord, 3 + 3 * Mathf.Pow(pointNormalYCoord[i], 2), -Mathf.Pow(1 - pointNormalYCoord[i] / 2, 1) * size / duration * Time.deltaTime / raiseTerrainSteps, true);
+				}
+				// float underSeaLevelMultiplier = 
+				// tools.RaiseTerrainRiver(uCoordinates[i], vCoordinates[i], 1 + 3 * Mathf.Pow(pointNormalYCoord[i], 2), -Mathf.Pow(1 - pointNormalYCoord[i] / 2, 1) * size / duration * Time.deltaTime, false);
+				
+			}
+			geometryChanged = true;
+			yield return null;
+		}
+	
+		float lastU = uCoordinates[uCoordinates.Count - 1];
+		float lastV = vCoordinates[vCoordinates.Count - 1];
+
+		if (0 < lastU && lastU < 1 && 0 < lastV && lastV < 1) { // If we haven't run off the map, let's make a lake
+			// MAKE HILL HERE
+			//StartCoroutine(MakeHill(lastU, lastV, size, duration, false));
+		} 
+
 		Manager("river");
-		yield return null;
 	}
 
 	IEnumerator GrowFlora(GameObject flora, float duration, float size) {
