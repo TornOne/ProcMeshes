@@ -172,6 +172,10 @@ public class TerrainGenerator : MonoBehaviour {
 		}
 	}
 
+	void LakeAtPoint(float x, float y, float duration = 12, float size = 25) {
+		StartCoroutine(MakeLake(x, y, size, duration, false));
+	}
+
 	void Lake(float duration = 12, float size = 25) {
 		//Try to find a mostly non-elevated area
 		for (int attempt = 0; attempt < 50; attempt++) {
@@ -199,6 +203,25 @@ public class TerrainGenerator : MonoBehaviour {
 				return;
 			}
 		}
+	}
+
+	IEnumerator MakeLake(float x, float y, float r, float duration, bool hill) {
+		//Pick points around the hill / lake
+		float[] xPoints = new float[10];
+		float[] yPoints = new float[10];
+		}
+
+		//Raise each point until the target time has passed
+		float endTime = Time.time + duration;
+		while (Time.time < endTime) {
+			for (int i = 0; i < xPoints.Length; i++) {
+				tools.RaiseTerrain(xPoints[i], yPoints[i], r, r / duration * Time.deltaTime * (hill ? 2 : -2) / xPoints.Length, false);
+			}
+
+			geometryChanged = true;
+			yield return null;
+		}
+		
 	}
 
 	IEnumerator MakeHill(float x, float y, float r, float duration, bool hill) {
@@ -234,7 +257,7 @@ public class TerrainGenerator : MonoBehaviour {
 	}
 
 	// //Rivers seem to be ugly to implement and we can't actually indicate water above sea level anyways.
-	IEnumerator River(float duration = 20, float size = 4.0f) {
+	IEnumerator River(float duration = 5, float size = 4.0f) {
 
 		//	tools.RecalculateNormals();
 		tools.GetNormals();
@@ -250,7 +273,7 @@ public class TerrainGenerator : MonoBehaviour {
 		float maxHeight = float.MinValue;
 
 		float stepLength = 1.0f / tools.gridSize;
-		float raiseTerrainStepLength = stepLength / 10; // The smaller this is, the smoother the rivers are
+		float raiseTerrainStepLength = stepLength / 5; // The smaller this is, the smoother the rivers are
 
 
 		for (int attempt = 0; attempt < 20; attempt++) {
@@ -263,6 +286,18 @@ public class TerrainGenerator : MonoBehaviour {
 
 		int col = maxIndex % (tools.gridSize + 1);
 		int row = maxIndex / (tools.gridSize + 1);
+		if (col == 0) {
+			col++;
+		}
+		if (col == tools.gridSize) {
+			col--;
+		}
+		if (row == 0) {
+			row++;
+		}
+		if (row == tools.gridSize) {
+			row--;
+		}
 
 		float coordU = (float) col / tools.gridSize;
 		float coordV = (float) row / tools.gridSize;
@@ -330,11 +365,17 @@ public class TerrainGenerator : MonoBehaviour {
 				squaresVisited.Add(key, 1);
 			}
 
-			if (col > tools.gridSize || row > tools.gridSize || col < 0 || row < 0) { // Check if we've run out of the map
+			if (col >= tools.gridSize || row >= tools.gridSize || col <= 0 || row <= 0) { // Check if we've run out of the map
 				running = false;
 			}
 		} while (running);
-	
+
+		float lastU = uCoordinates[uCoordinates.Count - 1];
+		float lastV = vCoordinates[vCoordinates.Count - 1];
+
+		if (0 < lastU && lastU < 1 && 0 < lastV && lastV < 1) { // If we haven't run off the map, let's make a lake
+			LakeAtPoint(lastU, lastV, duration, size * 5);
+		}
 
 		while (Time.time < endTime) {
 			for (int i = 0; i < uCoordinates.Count - 1; i++) {
@@ -346,22 +387,12 @@ public class TerrainGenerator : MonoBehaviour {
 				
 				for (int j = 0; j < raiseTerrainSteps - 1; j++) { // Don't raise terrain at the endpoint
 					tools.RaiseTerrainRiver(uCoordinates[i] + j * nextPointVecUCoord, vCoordinates[i] + j * nextPointVecVCoord, 3 + 3 * Mathf.Pow(pointNormalYCoord[i], 2), -Mathf.Pow(1 - pointNormalYCoord[i] / 2, 1) * size / duration * Time.deltaTime / raiseTerrainSteps, true);
-				}
-				// float underSeaLevelMultiplier = 
-				// tools.RaiseTerrainRiver(uCoordinates[i], vCoordinates[i], 1 + 3 * Mathf.Pow(pointNormalYCoord[i], 2), -Mathf.Pow(1 - pointNormalYCoord[i] / 2, 1) * size / duration * Time.deltaTime, false);
-				
+				}				
 			}
 			geometryChanged = true;
 			yield return null;
 		}
 	
-		float lastU = uCoordinates[uCoordinates.Count - 1];
-		float lastV = vCoordinates[vCoordinates.Count - 1];
-
-		if (0 < lastU && lastU < 1 && 0 < lastV && lastV < 1) { // If we haven't run off the map, let's make a lake
-			// MAKE HILL HERE
-			//StartCoroutine(MakeHill(lastU, lastV, size, duration, false));
-		} 
 
 		Manager("river");
 	}
