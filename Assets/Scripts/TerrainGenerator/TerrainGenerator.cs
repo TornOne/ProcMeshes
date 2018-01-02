@@ -99,7 +99,7 @@ public class TerrainGenerator : MonoBehaviour {
 				tools.RecalculateBounds();
 				if (riverCount != 0) {
 					for (int i = 0; i < riverCount; i++) {
-						StartCoroutine(River());
+						StartCoroutine(River(durationSlider.value / 4));
 					}
 				} else {
 					Manager("river");
@@ -209,6 +209,10 @@ public class TerrainGenerator : MonoBehaviour {
 		//Pick points around the hill / lake
 		float[] xPoints = new float[10];
 		float[] yPoints = new float[10];
+		float offset = r / tools.gridSize;
+		for (int i = 0; i < xPoints.Length; i++) {
+			xPoints[i] = x + Random.Range(-offset, offset);
+			yPoints[i] = y + Random.Range(-offset, offset);
 		}
 
 		//Raise each point until the target time has passed
@@ -276,7 +280,7 @@ public class TerrainGenerator : MonoBehaviour {
 		float raiseTerrainStepLength = stepLength / 5; // The smaller this is, the smoother the rivers are
 
 
-		for (int attempt = 0; attempt < 20; attempt++) {
+		for (int attempt = 0; attempt < 10; attempt++) {
 			int index = Random.Range(0, tools.vertices.Length);
 			if (tools.vertices[index].y > maxHeight) {
 				maxHeight = tools.vertices[index].y;
@@ -411,6 +415,52 @@ public class TerrainGenerator : MonoBehaviour {
 	IEnumerator Flora(float duration = 12) {
 		float density = floraDensitySlider.value / 1000;
 
+		int floraCounter = 0;
+		int floraCounterCap = 10;
+
+		// Random generation of flora across map
+		int edgeCount = tools.gridSize * tools.gridSize;
+		int floraToCreate =(int) (edgeCount * density);
+		HashSet<int> floraIndexes = new HashSet<int>();
+		for (int floraNr = 0; floraNr < floraToCreate; floraNr++) {
+			int vertexInt = (int) (Random.Range(0f, 1f) * edgeCount);
+			floraIndexes.Add(vertexInt);
+		}
+
+		foreach(int vertexInt in floraIndexes) {
+			Vector3 vertex = tools.vertices[vertexInt];
+			GameObject o;
+			if (vertex.y < 0 || vertex.y > 40) {
+				o = Instantiate(rock, vertex, Quaternion.identity);
+				StartCoroutine(GrowFlora(o, duration, 0.5f));
+			} else {
+				float random = Random.Range(0f, 1f);
+
+				if (random < 0.1f) {
+					o = Instantiate(rock, vertex, Quaternion.identity);
+					StartCoroutine(GrowFlora(o, duration, 0.5f));
+				} else if (random < 0.1f + Mathf.Lerp(0.3f, 0.2f, vertex.y / 40)) {
+					o = Instantiate(bush, vertex, Quaternion.identity);
+					StartCoroutine(GrowFlora(o, duration, 1));
+				} else if (random < 0.1f + Mathf.Lerp(0.8f, 0.2f, vertex.y / 40)) {
+					o = Instantiate(tree, vertex, Quaternion.identity);
+					StartCoroutine(GrowFlora(o, duration, 0.5f));
+				} else {
+					o = Instantiate(deadTree, vertex, Quaternion.identity);
+					StartCoroutine(GrowFlora(o, duration, 0.5f));
+				}
+			}
+			flora.Add(o);
+
+			floraCounter++;
+			if (floraCounter == floraCounterCap) {
+				yield return null;
+				floraCounter = 0;
+			}
+		}
+
+		// Random generation of flora starting from edge
+		/*
 		foreach (Vector3 vertex in tools.vertices) {
 			if (Random.Range(0f, 1f) > density || vertex.y >= 50) {
 				continue;
@@ -437,7 +487,13 @@ public class TerrainGenerator : MonoBehaviour {
 				}
 			}
 			flora.Add(o);
-			yield return null;
+
+			floraCounter++;
+			if (floraCounter == floraCounterCap) {
+				yield return null;
+				floraCounter = 0;
+			}
 		}
+		*/
 	}
 }
