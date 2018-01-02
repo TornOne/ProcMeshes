@@ -415,85 +415,87 @@ public class TerrainGenerator : MonoBehaviour {
 	IEnumerator Flora(float duration = 12) {
 		float density = floraDensitySlider.value / 1000;
 
+		bool floraScattered = true;
+
 		int floraCounter = 0;
 		int floraCounterCap = 10;
 
-		// Random generation of flora across map
-		int edgeCount = tools.gridSize * tools.gridSize;
-		int floraToCreate =(int) (edgeCount * density);
-		HashSet<int> floraIndexes = new HashSet<int>();
-		for (int floraNr = 0; floraNr < floraToCreate; floraNr++) {
-			int vertexInt = (int) (Random.Range(0f, 1f) * edgeCount);
-			floraIndexes.Add(vertexInt);
-		}
+		if (floraScattered) {
+			// Random generation of flora across map
+			int edgeCount = tools.gridSize * tools.gridSize;
+			int floraToCreate = (int) (edgeCount * density);
+			HashSet<int> floraIndexes = new HashSet<int>();
+			for (int floraNr = 0; floraNr < floraToCreate; floraNr++) {
+				int vertexInt = (int) (Random.Range(0f, 1f) * edgeCount);
+				floraIndexes.Add(vertexInt);
+			}
 
-		foreach(int vertexInt in floraIndexes) {
-			Vector3 vertex = tools.vertices[vertexInt];
-			GameObject o;
-			if (vertex.y < 0 || vertex.y > 40) {
-				o = Instantiate(rock, vertex, Quaternion.identity);
-				StartCoroutine(GrowFlora(o, duration, 0.5f));
-			} else {
-				float random = Random.Range(0f, 1f);
-
-				if (random < 0.1f) {
+			foreach (int vertexInt in floraIndexes) {
+				Vector3 vertex = tools.vertices[vertexInt];
+				GameObject o;
+				if (vertex.y < 0 || vertex.y > 40) {
 					o = Instantiate(rock, vertex, Quaternion.identity);
 					StartCoroutine(GrowFlora(o, duration, 0.5f));
-				} else if (random < 0.1f + Mathf.Lerp(0.3f, 0.2f, vertex.y / 40)) {
-					o = Instantiate(bush, vertex, Quaternion.identity);
-					StartCoroutine(GrowFlora(o, duration, 1));
-				} else if (random < 0.1f + Mathf.Lerp(0.8f, 0.2f, vertex.y / 40)) {
-					o = Instantiate(tree, vertex, Quaternion.identity);
-					StartCoroutine(GrowFlora(o, duration, 0.5f));
 				} else {
-					o = Instantiate(deadTree, vertex, Quaternion.identity);
-					StartCoroutine(GrowFlora(o, duration, 0.5f));
+					float random = Random.Range(0f, 1f);
+
+					if (random < 0.1f) {
+						o = Instantiate(rock, vertex, Quaternion.identity);
+						StartCoroutine(GrowFlora(o, duration, 0.5f));
+					} else if (random < 0.1f + Mathf.Lerp(0.3f, 0.2f, vertex.y / 40)) {
+						o = Instantiate(bush, vertex, Quaternion.identity);
+						StartCoroutine(GrowFlora(o, duration, 1));
+					} else if (random < 0.1f + Mathf.Lerp(0.8f, 0.2f, vertex.y / 40)) {
+						o = Instantiate(tree, vertex, Quaternion.identity);
+						StartCoroutine(GrowFlora(o, duration, 0.5f));
+					} else {
+						o = Instantiate(deadTree, vertex, Quaternion.identity);
+						StartCoroutine(GrowFlora(o, duration, 0.5f));
+					}
+				}
+				flora.Add(o);
+
+				floraCounter++;
+				if (floraCounter == floraCounterCap) {
+					yield return null;
+					floraCounter = 0;
 				}
 			}
-			flora.Add(o);
-
-			floraCounter++;
-			if (floraCounter == floraCounterCap) {
-				yield return null;
-				floraCounter = 0;
-			}
-		}
-
-		// Random generation of flora starting from edge
-		/*
-		foreach (Vector3 vertex in tools.vertices) {
-			if (Random.Range(0f, 1f) > density || vertex.y >= 50) {
-				continue;
-			}
-			GameObject o;
-			if (vertex.y < 0 || vertex.y > 40) {
-				o = Instantiate(rock, vertex, Quaternion.identity);
-				StartCoroutine(GrowFlora(o, duration, 0.5f));
-			} else {
-				float random = Random.Range(0f, 1f);
-
-				if (random < 0.1f) {
+		} else {
+			// Random generation of flora starting from edge
+			foreach (Vector3 vertex in tools.vertices) {
+				if (Random.Range(0f, 1f) > density || vertex.y >= 50) {
+					continue;
+				}
+				GameObject o;
+				if (vertex.y < 0 || vertex.y > 40) {
 					o = Instantiate(rock, vertex, Quaternion.identity);
 					StartCoroutine(GrowFlora(o, duration, 0.5f));
-				} else if (random < 0.1f + Mathf.Lerp(0.3f, 0.2f, vertex.y / 40)) {
-					o = Instantiate(bush, vertex, Quaternion.identity);
-					StartCoroutine(GrowFlora(o, duration, 1));
-				} else if (random < 0.1f + Mathf.Lerp(0.8f, 0.2f, vertex.y / 40)) {
-					o = Instantiate(tree, vertex, Quaternion.identity);
-					StartCoroutine(GrowFlora(o, duration, 0.5f));
 				} else {
-					o = Instantiate(deadTree, vertex, Quaternion.identity);
-					StartCoroutine(GrowFlora(o, duration, 0.5f));
+					float random = Random.Range(0f, 1f);
+
+					if (random < 0.1f) {
+						o = Instantiate(rock, vertex, Quaternion.identity);
+						StartCoroutine(GrowFlora(o, duration, 0.5f));
+					} else if (random < 0.1f + Mathf.Lerp(0.3f, 0.2f, vertex.y / 40)) {
+						o = Instantiate(bush, vertex, Quaternion.identity);
+						StartCoroutine(GrowFlora(o, duration, 1));
+					} else if (random < 0.1f + Mathf.Lerp(0.8f, 0.2f, vertex.y / 40)) {
+						o = Instantiate(tree, vertex, Quaternion.identity);
+						StartCoroutine(GrowFlora(o, duration, 0.5f));
+					} else {
+						o = Instantiate(deadTree, vertex, Quaternion.identity);
+						StartCoroutine(GrowFlora(o, duration, 0.5f));
+					}
+				}
+				flora.Add(o);
+
+				floraCounter++;
+				if (floraCounter == floraCounterCap) {
+					yield return null;
+					floraCounter = 0;
 				}
 			}
-			flora.Add(o);
-
-			floraCounter++;
-			if (floraCounter == floraCounterCap) {
-				yield return null;
-				floraCounter = 0;
-			}
 		}
-		*/
 	}
 }
