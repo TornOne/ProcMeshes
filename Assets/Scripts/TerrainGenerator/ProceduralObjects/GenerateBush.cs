@@ -6,7 +6,7 @@ public class GenerateBush : MonoBehaviour {
     private Color bushColor = new Color(0.64F, 0.82F, 0.25F, 1.0F);
     private float maxRandomDistance = 0.2F;
     private float shortBushChance = 0.7F;
-    private float bushScale = 2.0F;
+    private float bushScale = 0.5F;
 
 	void Start () {
         IcosphereGenerator icosphereGen = GetComponent<IcosphereGenerator>();

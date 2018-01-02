@@ -119,5 +119,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hasLeaves: 0
-  baseRadius: 0.7
+  baseRadius: 0.17
   iterationCount: 6

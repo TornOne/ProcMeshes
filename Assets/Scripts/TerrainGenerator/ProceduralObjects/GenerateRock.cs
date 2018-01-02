@@ -6,8 +6,8 @@ public class GenerateRock : MonoBehaviour {
     private Color rockColor = new Color(0.53F, 0.52F, 0.49F, 1.0F);
     private float maxRandomDistance = 0.4F;
     private float smallRockChance = 0.7F;
-    private float smallRockScale = 1.5F;
-    private float bigRockScale = 3.0F;
+    private float smallRockScale = 0.4F;
+    private float bigRockScale = 0.75F;
     private float maxRandomScale = 1.5F;
     private float randomScaleChance = 0.3F;
 

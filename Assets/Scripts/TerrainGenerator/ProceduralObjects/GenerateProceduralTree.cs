@@ -5,11 +5,11 @@ public class GenerateProceduralTree : MonoBehaviour {
     public float baseRadius; // base branch width
     public int iterationCount;
 
-    private float baseLength = 6.0F; // base branch length
+    private float baseLength = 1.5F; // base branch length
     private float branchFactor = 0.8F; // branch narrower and wider end width ratio
     private float sizeFactor = 0.8F; // branch length and width change per recursive step
     private float leavesRandomFactor = 0.3F;
-    private float leavesScaleFactor = 7.0F;
+    private float leavesScaleFactor = 1.7F;
 
     private float directionRange = 180; // direction range for the second branch, considering the direction of the first
     private float lowerBranchMinAngle = 45; //
