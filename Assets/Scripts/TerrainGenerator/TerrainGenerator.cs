@@ -7,16 +7,16 @@ using UnityEngine.UI;
 public class TerrainGenerator : MonoBehaviour {
 	TerrainMeshTools tools;
 	List<GameObject> flora = new List<GameObject>();
-	public GameObject bush, rock, tree, deadTree;
+	public GameObject bush, rock, grass, tree, deadTree;
 	bool geometryChanged = false;
 
-	public Slider mountainCountSlider, lakeCountSlider, hillCountSlider, riverCountSlider; //int
+	public Slider mountainCountSlider, hillCountSlider, riverCountSlider; //int
 	public Slider floraDensitySlider; //Permille
-	public Slider mountainSizeSlider, lakeSizeSlider, hillSizeSlider, riverSizeSlider;
+	public Slider mountainSizeSlider, hillSizeSlider, riverSizeSlider;
 	public Slider durationSlider; //Divide by 4
 
-	int mountainCount, lakeCount, hillCount, riverCount;
-	int finishedMountainCount, finishedLakeCount, finishedHillCount, finishedRiverCount;
+	int mountainCount, hillCount, riverCount;
+	int finishedMountainCount, finishedHillCount, finishedRiverCount;
 
 	void Start() {
 		tools = GetComponent<TerrainMeshTools>();
@@ -32,7 +32,7 @@ public class TerrainGenerator : MonoBehaviour {
 		}
 	}
 
-	//Mountains -> Lakes -> Hills -> Rivers -> Flora
+	//Mountains -> Hills -> Rivers (+Lakes) -> Flora
 	//Keeps track of generation progress, calls methods as necessary
 	public void Manager(string message) {
 		if (message == "generate") {
@@ -44,18 +44,16 @@ public class TerrainGenerator : MonoBehaviour {
 			flora.Clear();
 
 			mountainCount = (int) mountainCountSlider.value;
-			lakeCount = (int) lakeCountSlider.value;
 			hillCount = (int) hillCountSlider.value;
 			riverCount = (int) riverCountSlider.value;
 
 			finishedMountainCount = 0;
-			finishedLakeCount = 0;
 			finishedHillCount = 0;
 			finishedRiverCount = 0;
 
 			if (mountainCount != 0) {
 				for (int i = 0; i < mountainCount; i++) {
-					StartCoroutine(MountainRange(25, durationSlider.value / 4, mountainSizeSlider.value));
+					StartCoroutine(MountainRange(25, durationSlider.value / 5, mountainSizeSlider.value));
 				}
 			} else {
 				Manager("mountain");
@@ -67,24 +65,9 @@ public class TerrainGenerator : MonoBehaviour {
 
 			if (finishedMountainCount >= mountainCount) {
 				tools.RecalculateBounds();
-				if (lakeCount != 0) {
-					for (int i = 0; i < lakeCount; i++) {
-						Lake(durationSlider.value / 4, lakeSizeSlider.value);
-					}
-				} else {
-					Manager("lake");
-				}
-			}
-		}
-
-		else if (message == "lake") {
-			finishedLakeCount++;
-
-			if (finishedLakeCount >= lakeCount) {
-				tools.RecalculateBounds();
 				if (hillCount != 0) {
 					for (int i = 0; i < hillCount; i++) {
-						Hill(durationSlider.value / 4, hillSizeSlider.value);
+						Hill(durationSlider.value / 5, hillSizeSlider.value);
 					}
 				} else {
 					Manager("hill");
@@ -99,7 +82,7 @@ public class TerrainGenerator : MonoBehaviour {
 				tools.RecalculateBounds();
 				if (riverCount != 0) {
 					for (int i = 0; i < riverCount; i++) {
-						StartCoroutine(River(durationSlider.value / 4));
+						StartCoroutine(River(durationSlider.value / 5, riverSizeSlider.value));
 					}
 				} else {
 					Manager("river");
@@ -112,7 +95,7 @@ public class TerrainGenerator : MonoBehaviour {
 
 			if (finishedRiverCount >= riverCount) {
 				tools.RecalculateBounds();
-				StartCoroutine(Flora(durationSlider.value / 4));
+				StartCoroutine(Flora(durationSlider.value / 5));
 			}
 		}
 	}
@@ -172,10 +155,6 @@ public class TerrainGenerator : MonoBehaviour {
 		}
 	}
 
-	void LakeAtPoint(float x, float y, float duration = 12, float size = 25) {
-		StartCoroutine(MakeLake(x, y, size, duration, false));
-	}
-
 	void Lake(float duration = 12, float size = 25) {
 		//Try to find a mostly non-elevated area
 		for (int attempt = 0; attempt < 50; attempt++) {
@@ -205,29 +184,6 @@ public class TerrainGenerator : MonoBehaviour {
 		}
 	}
 
-	IEnumerator MakeLake(float x, float y, float r, float duration, bool hill) {
-		//Pick points around the hill / lake
-		float[] xPoints = new float[10];
-		float[] yPoints = new float[10];
-		float offset = r / tools.gridSize;
-		for (int i = 0; i < xPoints.Length; i++) {
-			xPoints[i] = x + Random.Range(-offset, offset);
-			yPoints[i] = y + Random.Range(-offset, offset);
-		}
-
-		//Raise each point until the target time has passed
-		float endTime = Time.time + duration;
-		while (Time.time < endTime) {
-			for (int i = 0; i < xPoints.Length; i++) {
-				tools.RaiseTerrain(xPoints[i], yPoints[i], r, r / duration * Time.deltaTime * (hill ? 2 : -2) / xPoints.Length, false);
-			}
-
-			geometryChanged = true;
-			yield return null;
-		}
-		
-	}
-
 	IEnumerator MakeHill(float x, float y, float r, float duration, bool hill) {
 		//Pick points around the hill / lake
 		float[] xPoints = new float[10];
@@ -251,8 +207,6 @@ public class TerrainGenerator : MonoBehaviour {
 
 		if (hill) {
 			Manager("hill");
-		} else {
-			Manager("lake");
 		}
 	}
 
@@ -260,24 +214,22 @@ public class TerrainGenerator : MonoBehaviour {
 		StartCoroutine(MakeHill(Random.Range(0f, 1f), Random.Range(0f, 1f), size, duration, true));
 	}
 
-	IEnumerator River(float duration = 5, float size = 4.0f) {
+	IEnumerator River(float duration = 12, float size = 25) {
 		tools.GetNormals();
 
 		float momentum = 0.9f; // How much the river wants to keep going in the same direction
 		float turbulence = 0.9f; // How much the river turns randomly from the slope's normal
-
-		float endTime = Time.time + duration;
 
 		Dictionary<int, int> squaresVisited = new Dictionary<int, int>();
 
 		int maxIndex = 0;
 		float maxHeight = float.MinValue;
 
-		float stepLength = 1.0f / tools.gridSize;
-		float raiseTerrainStepLength = stepLength / 5; // The smaller this is, the smoother the rivers are
+		float smoothness = 2;
+		float stepLength = 1 / (smoothness * tools.gridSize);
 
-
-		for (int attempt = 0; attempt < 10; attempt++) {
+		//Find a high location
+		for (int attempt = 0; attempt < 12; attempt++) {
 			int index = Random.Range(0, tools.vertices.Length);
 			if (tools.vertices[index].y > maxHeight) {
 				maxHeight = tools.vertices[index].y;
@@ -289,14 +241,12 @@ public class TerrainGenerator : MonoBehaviour {
 		int row = maxIndex / (tools.gridSize + 1);
 		if (col == 0) {
 			col++;
-		}
-		if (col == tools.gridSize) {
+		} else if (col == tools.gridSize) {
 			col--;
 		}
 		if (row == 0) {
 			row++;
-		}
-		if (row == tools.gridSize) {
+		} else if (row == tools.gridSize) {
 			row--;
 		}
 
@@ -305,48 +255,42 @@ public class TerrainGenerator : MonoBehaviour {
 
 		List<float> uCoordinates = new List<float>();
 		List<float> vCoordinates = new List<float>();
-		List<float> pointNormalYCoord = new List<float>();
 
 		uCoordinates.Add(coordU);
 		vCoordinates.Add(coordV);
-		pointNormalYCoord.Add(tools.normals[maxIndex].y);
 
 		bool running = true;
 		Vector3 momentumVector = new Vector3(0, 0, 0);
 
 
-		do {
+		while (running) {
 			int index = col + row * (tools.gridSize + 1);
 
 			Vector3 normalBotLeft = tools.normals[index];
 			Vector3 normalTopLeft = tools.normals[index + tools.gridSize + 1];
-			Vector3 normalTopRight = tools.normals[index + tools.gridSize + 1 + 1];
+			Vector3 normalTopRight = tools.normals[index + tools.gridSize + 2];
 			Vector3 normalBotRight = tools.normals[index + 1];
-			// Debug.Log(normalBotLeft + " " + normalBotRight + " " + normalTopLeft + " " + normalTopRight);
 
 			Vector3 surroundingNormal = normalBotLeft + normalTopLeft + normalTopRight + normalBotRight;
 
-			Vector3 surroundingNormalPlanar = new Vector3(surroundingNormal.x, 0, surroundingNormal.z);
+			Vector3 surroundingNormalPlanar = new Vector3(surroundingNormal.x, 0, surroundingNormal.z).normalized * stepLength;
 
-			surroundingNormalPlanar = (surroundingNormalPlanar).normalized * stepLength;
-
-			if (Vector3.Dot(momentumVector, surroundingNormalPlanar) > -stepLength * stepLength / 4) { // Keep momentum as long as we're not going too steep a hill
+			if (Vector3.Dot(momentumVector, surroundingNormalPlanar) > -stepLength * stepLength / 4) { // Keep momentum as long as we're not going up too steep a hill
 				surroundingNormalPlanar += momentumVector;
 			}
 
 
 			// Apply turbulence:
-			float randomTurn = Random.Range(-turbulence, turbulence) * surroundingNormal.y / 4;
-			surroundingNormalPlanar += randomTurn * Vector3.Cross(surroundingNormalPlanar, new Vector3(0, 1, 0));
-			// Debug.Log(randomTurn * Vector3.Cross(surroundingNormalPlanar, new Vector3(0, 1, 0)));
+			float surroundingY = surroundingNormal.y / 4;
+			float randomTurn = Random.Range(-turbulence, turbulence) * surroundingY;
+			surroundingNormalPlanar += randomTurn * Vector3.Cross(surroundingNormalPlanar, Vector3.up);
 
 
-			momentumVector = surroundingNormalPlanar * momentum * (surroundingNormal.y / 4) * (surroundingNormal.y / 4);
+			momentumVector = surroundingNormalPlanar * momentum * surroundingY * surroundingY;
 
 			coordU += surroundingNormalPlanar.x;
 			coordV += surroundingNormalPlanar.z;
 
-			pointNormalYCoord.Add(surroundingNormal.y / 4);
 			uCoordinates.Add(coordU);
 			vCoordinates.Add(coordV);
 
@@ -355,11 +299,10 @@ public class TerrainGenerator : MonoBehaviour {
 
 			// Check for cycles
 			int key = col + row * tools.gridSize;
-			if (squaresVisited.ContainsKey(key)) {
-				int value = squaresVisited[key];
-				squaresVisited.Remove(key);
-				squaresVisited.Add(key, 1 + value);
-				if (squaresVisited[key] > 2) { // We've very likely reached a cycle
+			int value;
+			if (squaresVisited.TryGetValue(key, out value)) {
+				squaresVisited[key] = value + 1;
+				if (value > 2 * smoothness - 1) { // We've very likely reached a cycle
 					running = false;
 				}
 			} else {
@@ -369,31 +312,23 @@ public class TerrainGenerator : MonoBehaviour {
 			if (col >= tools.gridSize || row >= tools.gridSize || col <= 0 || row <= 0) { // Check if we've run out of the map
 				running = false;
 			}
-		} while (running);
-
-		float lastU = uCoordinates[uCoordinates.Count - 1];
-		float lastV = vCoordinates[vCoordinates.Count - 1];
-
-		if (0 < lastU && lastU < 1 && 0 < lastV && lastV < 1) { // If we haven't run off the map, let's make a lake
-			LakeAtPoint(lastU, lastV, duration, size * 5);
 		}
 
+		if (0 < coordU && coordU < 1 && 0 < coordV && coordV < 1) { // If we haven't run off the map, let's make a lake
+			StartCoroutine(MakeHill(coordU, coordV, size, duration, false));
+		}
+
+		yield return new WaitForSeconds(duration);
+		float endTime = Time.time + duration;
+
 		while (Time.time < endTime) {
-			for (int i = 0; i < uCoordinates.Count - 1; i++) {
-				int raiseTerrainSteps = (int) (Mathf.Sqrt(Mathf.Pow(uCoordinates[i] - uCoordinates[i + 1], 2)
-														+ Mathf.Pow(vCoordinates[i] - vCoordinates[i + 1], 2))
-														/ raiseTerrainStepLength) + 2; // Add some number just so we don't get 0 steps
-				float nextPointVecUCoord = (uCoordinates[i + 1] - uCoordinates[i]) / raiseTerrainSteps;
-				float nextPointVecVCoord = (vCoordinates[i + 1] - vCoordinates[i]) / raiseTerrainSteps;
-				
-				for (int j = 0; j < raiseTerrainSteps - 1; j++) { // Don't raise terrain at the endpoint
-					tools.RaiseTerrainRiver(uCoordinates[i] + j * nextPointVecUCoord, vCoordinates[i] + j * nextPointVecVCoord, 3 + 3 * Mathf.Pow(pointNormalYCoord[i], 2), -Mathf.Pow(1 - pointNormalYCoord[i] / 2, 1) * size / duration * Time.deltaTime / raiseTerrainSteps, true);
-				}				
+			for (int i = 0; i < uCoordinates.Count; i++) {
+				tools.RaiseTerrainRiver(uCoordinates[i], vCoordinates[i], 10 / smoothness, -5 / smoothness / duration * Time.deltaTime, false);
 			}
+
 			geometryChanged = true;
 			yield return null;
 		}
-	
 
 		Manager("river");
 	}
@@ -412,8 +347,6 @@ public class TerrainGenerator : MonoBehaviour {
 	IEnumerator Flora(float duration = 12) {
 		float density = floraDensitySlider.value / 1000;
 		bool floraScattered = false;
-		int floraQuota = 3;
-		int floraThisFrame = 0;
 
 		if (floraScattered) {
 			// Random generation of flora across map
@@ -450,11 +383,7 @@ public class TerrainGenerator : MonoBehaviour {
 				}
 				flora.Add(o);
 
-				floraThisFrame++;
-				if (floraThisFrame >= floraQuota) {
-					floraThisFrame = 0;
-					yield return null;
-				}
+				yield return null;
 			}
 		} else {
 			// Random generation of flora starting from edge
@@ -464,32 +393,30 @@ public class TerrainGenerator : MonoBehaviour {
 				}
 				GameObject o;
 				if (vertex.y < 0 || vertex.y > 40) {
-					o = Instantiate(rock, vertex, Quaternion.identity);
-					StartCoroutine(GrowFlora(o, duration, 1f));
+					if (Random.Range(0f, 1f) < 0.5f) {
+						o = Instantiate(rock, vertex, Quaternion.identity);
+					} else {
+						o = Instantiate(grass, vertex, Quaternion.identity);
+					}
 				} else {
 					float random = Random.Range(0f, 1f);
 
-					if (random < 0.1f) {
+					if (random < 0.05f) {
 						o = Instantiate(rock, vertex, Quaternion.identity);
-						StartCoroutine(GrowFlora(o, duration, 1));
+					} else if (random < 0.1f) {
+						o = Instantiate(grass, vertex, Quaternion.identity);
 					} else if (random < 0.1f + Mathf.Lerp(0.3f, 0.2f, vertex.y / 40)) {
 						o = Instantiate(bush, vertex, Quaternion.identity);
-						StartCoroutine(GrowFlora(o, duration, 1));
 					} else if (random < 0.1f + Mathf.Lerp(0.8f, 0.2f, vertex.y / 40)) {
 						o = Instantiate(tree, vertex, Quaternion.identity);
-						StartCoroutine(GrowFlora(o, duration, 1));
 					} else {
 						o = Instantiate(deadTree, vertex, Quaternion.identity);
-						StartCoroutine(GrowFlora(o, duration, 1));
 					}
 				}
+				StartCoroutine(GrowFlora(o, duration, 1));
 				flora.Add(o);
 
-				floraThisFrame++;
-				if (floraThisFrame >= floraQuota) {
-					floraThisFrame = 0;
-					yield return null;
-				}
+				yield return null;
 			}
 		}
 	}

@@ -231,7 +231,7 @@ public class TerrainMeshTools : MonoBehaviour {
 
 	// Almost the same as RaiseTerrain, except it doesn't lower things under sea level very much
 	public void RaiseTerrainRiver(float x, float y, float r, float speed, bool pointy) {
-		float maxDepth = 20; // How deep should the rivers be (at maximum)
+		float maxDepth = 10; // How deep should the rivers be (at maximum)
 
 		x *= gridSize;
 		y *= gridSize;

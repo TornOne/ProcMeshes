@@ -12,7 +12,8 @@ public class CameraController : MonoBehaviour {
 	void Update() {
 		if (!menuActive) {
 			transform.Translate(new Vector3(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("UpDown"), Input.GetAxisRaw("Vertical")) * (Time.deltaTime * speed));
-			transform.localRotation = Quaternion.Euler(transform.localEulerAngles + new Vector3(-Input.GetAxisRaw("Mouse Y"), Input.GetAxisRaw("Mouse X")) * (Time.deltaTime * rotSpeed));
+			transform.Rotate(Vector3.right * Time.deltaTime * rotSpeed * -Input.GetAxisRaw("Mouse Y"));
+			transform.Rotate(Vector3.up * Time.deltaTime * rotSpeed * Input.GetAxisRaw("Mouse X"), Space.World);
 		}
 
 		if (Input.GetButtonDown("Cancel")) {
