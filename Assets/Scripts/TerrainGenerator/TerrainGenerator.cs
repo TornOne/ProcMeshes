@@ -260,10 +260,7 @@ public class TerrainGenerator : MonoBehaviour {
 		StartCoroutine(MakeHill(Random.Range(0f, 1f), Random.Range(0f, 1f), size, duration, true));
 	}
 
-	// //Rivers seem to be ugly to implement and we can't actually indicate water above sea level anyways.
 	IEnumerator River(float duration = 5, float size = 4.0f) {
-
-		//	tools.RecalculateNormals();
 		tools.GetNormals();
 
 		float momentum = 0.9f; // How much the river wants to keep going in the same direction
@@ -414,51 +411,49 @@ public class TerrainGenerator : MonoBehaviour {
 
 	IEnumerator Flora(float duration = 12) {
 		float density = floraDensitySlider.value / 1000;
-
-		bool floraScattered = true;
-
-		int floraCounter = 0;
-		int floraCounterCap = 10;
+		bool floraScattered = false;
+		int floraQuota = 3;
+		int floraThisFrame = 0;
 
 		if (floraScattered) {
 			// Random generation of flora across map
-			int edgeCount = tools.gridSize * tools.gridSize;
-			int floraToCreate = (int) (edgeCount * density);
-			HashSet<int> floraIndexes = new HashSet<int>();
-			for (int floraNr = 0; floraNr < floraToCreate; floraNr++) {
-				int vertexInt = (int) (Random.Range(0f, 1f) * edgeCount);
-				floraIndexes.Add(vertexInt);
+			HashSet<int> floraIndices = new HashSet<int>();
+			int floraCount = Mathf.RoundToInt(tools.vertices.Length * density);
+			for (int floraNr = 0; floraNr < floraCount; floraNr++) {
+				floraIndices.Add((int) (Random.Range(0f, 1f) * tools.vertices.Length));
 			}
 
-			foreach (int vertexInt in floraIndexes) {
+			foreach (int vertexInt in floraIndices) {
 				Vector3 vertex = tools.vertices[vertexInt];
 				GameObject o;
-				if (vertex.y < 0 || vertex.y > 40) {
+				if (vertex.y >= 50) {
+					continue;
+				} else if (vertex.y < 0 || vertex.y > 40) {
 					o = Instantiate(rock, vertex, Quaternion.identity);
-					StartCoroutine(GrowFlora(o, duration, 0.5f));
+					StartCoroutine(GrowFlora(o, duration, 1));
 				} else {
 					float random = Random.Range(0f, 1f);
 
 					if (random < 0.1f) {
 						o = Instantiate(rock, vertex, Quaternion.identity);
-						StartCoroutine(GrowFlora(o, duration, 0.5f));
+						StartCoroutine(GrowFlora(o, duration, 1));
 					} else if (random < 0.1f + Mathf.Lerp(0.3f, 0.2f, vertex.y / 40)) {
 						o = Instantiate(bush, vertex, Quaternion.identity);
 						StartCoroutine(GrowFlora(o, duration, 1));
 					} else if (random < 0.1f + Mathf.Lerp(0.8f, 0.2f, vertex.y / 40)) {
 						o = Instantiate(tree, vertex, Quaternion.identity);
-						StartCoroutine(GrowFlora(o, duration, 0.5f));
+						StartCoroutine(GrowFlora(o, duration, 1));
 					} else {
 						o = Instantiate(deadTree, vertex, Quaternion.identity);
-						StartCoroutine(GrowFlora(o, duration, 0.5f));
+						StartCoroutine(GrowFlora(o, duration, 1));
 					}
 				}
 				flora.Add(o);
 
-				floraCounter++;
-				if (floraCounter == floraCounterCap) {
+				floraThisFrame++;
+				if (floraThisFrame >= floraQuota) {
+					floraThisFrame = 0;
 					yield return null;
-					floraCounter = 0;
 				}
 			}
 		} else {
@@ -470,30 +465,30 @@ public class TerrainGenerator : MonoBehaviour {
 				GameObject o;
 				if (vertex.y < 0 || vertex.y > 40) {
 					o = Instantiate(rock, vertex, Quaternion.identity);
-					StartCoroutine(GrowFlora(o, duration, 0.5f));
+					StartCoroutine(GrowFlora(o, duration, 1f));
 				} else {
 					float random = Random.Range(0f, 1f);
 
 					if (random < 0.1f) {
 						o = Instantiate(rock, vertex, Quaternion.identity);
-						StartCoroutine(GrowFlora(o, duration, 0.5f));
+						StartCoroutine(GrowFlora(o, duration, 1));
 					} else if (random < 0.1f + Mathf.Lerp(0.3f, 0.2f, vertex.y / 40)) {
 						o = Instantiate(bush, vertex, Quaternion.identity);
 						StartCoroutine(GrowFlora(o, duration, 1));
 					} else if (random < 0.1f + Mathf.Lerp(0.8f, 0.2f, vertex.y / 40)) {
 						o = Instantiate(tree, vertex, Quaternion.identity);
-						StartCoroutine(GrowFlora(o, duration, 0.5f));
+						StartCoroutine(GrowFlora(o, duration, 1));
 					} else {
 						o = Instantiate(deadTree, vertex, Quaternion.identity);
-						StartCoroutine(GrowFlora(o, duration, 0.5f));
+						StartCoroutine(GrowFlora(o, duration, 1));
 					}
 				}
 				flora.Add(o);
 
-				floraCounter++;
-				if (floraCounter == floraCounterCap) {
+				floraThisFrame++;
+				if (floraThisFrame >= floraQuota) {
+					floraThisFrame = 0;
 					yield return null;
-					floraCounter = 0;
 				}
 			}
 		}
