@@ -5,9 +5,12 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Main Menu.unity
     guid: f4d16079511129c4a9be29c28025bcb8
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Terrain Generator.unity
     guid: 7d0f2542564315e418cac3ab70488865
+  - enabled: 1
+    path: Assets/Scenes/SculptingNoAlgoRoom.unity
+    guid: 5dfd88cdadb039f488c3c01abdefcb8e
