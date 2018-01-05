@@ -351,7 +351,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 2
   rotSpeed: 90
-  camera: {fileID: 697719350}
+  cam: {fileID: 697719350}
 --- !u!4 &803212369
 Transform:
   m_ObjectHideFlags: 0
@@ -524,7 +524,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f3aa231a7974eb429487276f5e98e9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  segments: {x: 25, y: 50, z: 25}
+  segments: {x: 20, y: 40, z: 20}
   size: {x: 1, y: 2, z: 1}
   cube: {fileID: 1275346890290482, guid: 7d87c9937748bc54bbe0d34101efa05c, type: 2}
 --- !u!1 &1729019072
@@ -552,7 +552,7 @@ MeshRenderer:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1729019072}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_MotionVectors: 1
