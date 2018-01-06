@@ -227,6 +227,8 @@ public class TerrainGenerator : MonoBehaviour {
 
 		float smoothness = 2;
 		float stepLength = 1 / (smoothness * tools.gridSize);
+		float lakeSize = size;
+		size = size / (smoothness * smoothness);
 
 		//Find a high location
 		for (int attempt = 0; attempt < 12; attempt++) {
@@ -285,6 +287,7 @@ public class TerrainGenerator : MonoBehaviour {
 			float randomTurn = Random.Range(-turbulence, turbulence) * surroundingY;
 			surroundingNormalPlanar += randomTurn * Vector3.Cross(surroundingNormalPlanar, Vector3.up);
 
+			surroundingNormalPlanar = surroundingNormalPlanar.normalized * stepLength;
 
 			momentumVector = surroundingNormalPlanar * momentum * surroundingY * surroundingY;
 
@@ -315,7 +318,7 @@ public class TerrainGenerator : MonoBehaviour {
 		}
 
 		if (0 < coordU && coordU < 1 && 0 < coordV && coordV < 1) { // If we haven't run off the map, let's make a lake
-			StartCoroutine(MakeHill(coordU, coordV, size, duration, false));
+			StartCoroutine(MakeHill(coordU, coordV, lakeSize, duration, false));
 		}
 
 		yield return new WaitForSeconds(duration);
