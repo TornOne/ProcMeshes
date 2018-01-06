@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
-public class AlgoSculpture : MonoBehaviour {
+public class AlgoSmoothSculpture : MonoBehaviour {
 	public Vector3 size;
 	public Vector3Int segments;
 	bool[] gridPoints;
@@ -55,11 +55,13 @@ public class AlgoSculpture : MonoBehaviour {
 
 	//Idea and lookup tables from http://paulbourke.net/geometry/polygonise/
 	void RefreshMesh() {
+		Dictionary<int, int> vertexMap = new Dictionary<int, int>();
 		List<Vector3> vertices = new List<Vector3>();
-		int vertexIndex = 0;
 		List<int> triangles = new List<int>();
 		int vLayerLength = (segments.x + 1) * (segments.z + 1);
 		int vRowLength = segments.x + 1;
+		int eLayerLength = vLayerLength * 4;
+		int eRowLength = vRowLength * 2;
 
 		//Check every cube
 		for (int y = 0; y < segments.y; y++) {
@@ -86,13 +88,31 @@ public class AlgoSculpture : MonoBehaviour {
 					//Construct all the triangles under the specified index at the specified offset
 					Vector3[] triOffsets = triTable[triIndex];
 					for (int i = 0; i < triOffsets.Length; i += 3) {
-						vertices.Add(position + triOffsets[i]);
-						vertices.Add(position + triOffsets[i + 1]);
-						vertices.Add(position + triOffsets[i + 2]);
-						triangles.Add(vertexIndex);
-						triangles.Add(vertexIndex + 1);
-						triangles.Add(vertexIndex + 2);
-						vertexIndex += 3;
+						Vector3 pos1 = position + triOffsets[i];
+						Vector3 pos2 = position + triOffsets[i + 1];
+						Vector3 pos3 = position + triOffsets[i + 2];
+						int i1 = Mathf.RoundToInt(pos1.y * 2) * eLayerLength + Mathf.RoundToInt(pos1.z * 2) * eRowLength + Mathf.RoundToInt(pos1.x * 2);
+						int i2 = Mathf.RoundToInt(pos2.y * 2) * eLayerLength + Mathf.RoundToInt(pos2.z * 2) * eRowLength + Mathf.RoundToInt(pos2.x * 2);
+						int i3 = Mathf.RoundToInt(pos3.y * 2) * eLayerLength + Mathf.RoundToInt(pos3.z * 2) * eRowLength + Mathf.RoundToInt(pos3.x * 2);
+						int vi1, vi2, vi3;
+						if (!vertexMap.TryGetValue(i1, out vi1)) {
+							vi1 = vertices.Count;
+							vertices.Add(pos1);
+							vertexMap.Add(i1, vi1);
+						}
+						if (!vertexMap.TryGetValue(i2, out vi2)) {
+							vi2 = vertices.Count;
+							vertices.Add(pos2);
+							vertexMap.Add(i2, vi2);
+						}
+						if (!vertexMap.TryGetValue(i3, out vi3)) {
+							vi3 = vertices.Count;
+							vertices.Add(pos3);
+							vertexMap.Add(i3, vi3);
+						}
+						triangles.Add(vi1);
+						triangles.Add(vi2);
+						triangles.Add(vi3);
 					}
 				}
 			}
