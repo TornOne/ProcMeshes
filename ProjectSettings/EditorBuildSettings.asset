@@ -5,12 +5,27 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Main Menu.unity
     guid: f4d16079511129c4a9be29c28025bcb8
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Terrain Generator.unity
     guid: 7d0f2542564315e418cac3ab70488865
   - enabled: 1
+    path: Assets/Scenes/SculptingLobby.unity
+    guid: 5ffc8589a96a0974682c17e61fa791fc
+  - enabled: 1
     path: Assets/Scenes/SculptingNoAlgoRoom.unity
     guid: 5dfd88cdadb039f488c3c01abdefcb8e
+  - enabled: 1
+    path: Assets/Scenes/SculptingNaiveRoom.unity
+    guid: e94a8e9701614ae418048a304133ad23
+  - enabled: 1
+    path: Assets/Scenes/SculptingNaiveSmoothRoom.unity
+    guid: a8ef839ef6bb13940b22aa0125bb08e4
+  - enabled: 1
+    path: Assets/Scenes/SculptingAlgoRoom.unity
+    guid: 5c552b06f25a0d84d8c23e91f42b5aff
+  - enabled: 1
+    path: Assets/Scenes/SculptingAlgoSmoothRoom.unity
+    guid: b8d449eae62730740aa7ca3b616365f0
