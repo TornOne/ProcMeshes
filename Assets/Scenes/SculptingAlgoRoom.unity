@@ -333,7 +333,7 @@ GameObject:
   - component: {fileID: 803212366}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -492,6 +492,9 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 934105495}
+  - component: {fileID: 934105499}
+  - component: {fileID: 934105498}
+  - component: {fileID: 934105497}
   - component: {fileID: 934105496}
   m_Layer: 0
   m_Name: Sculpture
@@ -521,12 +524,66 @@ MonoBehaviour:
   m_GameObject: {fileID: 934105494}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1f3aa231a7974eb429487276f5e98e9a, type: 3}
+  m_Script: {fileID: 11500000, guid: 146235dbff3bb424f85375040b1a51c0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  segments: {x: 20, y: 40, z: 20}
   size: {x: 1, y: 2, z: 1}
-  cube: {fileID: 1275346890290482, guid: 7d87c9937748bc54bbe0d34101efa05c, type: 2}
+  segments: {x: 20, y: 40, z: 20}
+--- !u!64 &934105497
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 934105494}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Convex: 0
+  m_InflateMesh: 0
+  m_SkinWidth: 0.01
+  m_Mesh: {fileID: 0}
+--- !u!23 &934105498
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 934105494}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 0
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+--- !u!33 &934105499
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 934105494}
+  m_Mesh: {fileID: 0}
 --- !u!1 &1729019072
 GameObject:
   m_ObjectHideFlags: 0

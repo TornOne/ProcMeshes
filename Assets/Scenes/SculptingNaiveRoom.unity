@@ -350,7 +350,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 2
-  rotSpeed: 90
+  rotSpeed: 2
   cam: {fileID: 697719350}
 --- !u!4 &803212369
 Transform:

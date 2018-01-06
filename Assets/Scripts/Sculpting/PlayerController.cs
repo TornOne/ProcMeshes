@@ -26,8 +26,8 @@ public class PlayerController : MonoBehaviour {
 		}
 
 		transform.localPosition = new Vector3(transform.localPosition.x, 1, transform.localPosition.z);
-		cam.transform.Rotate(Time.deltaTime * -rotSpeed * Input.GetAxisRaw("Mouse Y"), 0, 0);
-		transform.Rotate(0, Time.deltaTime * rotSpeed * Input.GetAxisRaw("Mouse X"), 0);
+		cam.transform.Rotate(-rotSpeed * Input.GetAxisRaw("Mouse Y"), 0, 0);
+		transform.Rotate(0, rotSpeed * Input.GetAxisRaw("Mouse X"), 0);
 		controller.Move(transform.TransformDirection(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")).normalized * speed * (Input.GetButton("Sprint") ? 2 : 1) * Time.deltaTime);
 	}
 }
