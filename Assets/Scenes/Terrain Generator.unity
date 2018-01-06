@@ -5188,7 +5188,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   menu: {fileID: 1537602653}
   speed: 60
-  rotSpeed: 180
+  rotSpeed: 3
 --- !u!1 &1740406102
 GameObject:
   m_ObjectHideFlags: 0
